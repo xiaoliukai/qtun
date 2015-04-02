@@ -84,6 +84,7 @@ typedef struct
 
 typedef struct
 {
+    char            this_path[MAX_PATH];
     unsigned int    msg_ident;
     unsigned int    msg_ttl;
     unsigned int    localip;
@@ -158,7 +159,9 @@ struct library_conf_s
 };
 
 extern int library_init(library_conf_t conf);
+extern int init_path(char* cmd);
 extern int init_lua();
+extern void show_logo();
 extern void library_free();
 extern void conf_init(library_conf_t* conf);
 extern int compare_clients_by_fd(const void* d1, const size_t l1, const void* d2, const size_t l2);

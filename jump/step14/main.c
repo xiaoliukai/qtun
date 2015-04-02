@@ -112,8 +112,8 @@ int main(int argc, char* argv[])
     localfd = remotefd = -1;
 #endif
     
+    init_path(argv[0]);
     conf_init(&conf);
-
 
     memset(&this, 0, sizeof(this));
 
@@ -176,6 +176,7 @@ int main(int argc, char* argv[])
 #endif
     
     init_lua();
+    show_logo();
     script_load_config(this.lua, &conf, conf.conf_file);
     
     if (conf.localip == 0)

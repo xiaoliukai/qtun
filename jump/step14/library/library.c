@@ -116,10 +116,25 @@ int library_init(library_conf_t conf)
     return 1;
 }
 
+int init_path(char* cmd)
+{
+    char path[MAX_PATH];
+    char* end;
+    realpath(cmd, path);
+    end = path + strlen(path);
+    while (end > path && *end != '/' && *end != '\\') --end;
+    memset(this.this_path, 0, sizeof(this.this_path));
+    memcpy(this.this_path, path, end - path + 1);
+    return 1;
+}
+
 int init_lua()
 {
+    char path[MAX_PATH];
     this.lua = luaL_newstate();
-    if (luaL_dofile(this.lua, "../scripts/qtun.lua") != 0)
+    strcpy(path, this.this_path);
+    strcat(path, "scripts/qtun.lua");
+    if (luaL_dofile(this.lua, path) != 0)
     {
         fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
         lua_close(this.lua);
@@ -127,6 +142,15 @@ int init_lua()
     }
     script_global_init(this.lua);
     return 1;
+}
+
+void show_logo()
+{
+    char path[MAX_PATH];
+    strcpy(path, this.this_path);
+    strcat(path, "scripts/logo.lua");
+    if (luaL_dofile(this.lua, path) != 0)
+        fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
 }
 
 void library_free()

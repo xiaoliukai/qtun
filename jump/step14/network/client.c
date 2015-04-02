@@ -66,12 +66,15 @@ int connect_server(char* host, unsigned short port)
     this.client.remote_ip = addr.sin_addr.s_addr;
     this.client.addr = addr;
 
-    rc = connect(fd, (struct sockaddr*)&addr, sizeof(addr));
-    if (rc == -1)
-    {
-        perror("connect");
-        close(fd);
-        return -1;
+    if (!this.use_udp)
+    {        
+        rc = connect(fd, (struct sockaddr*)&addr, sizeof(addr));
+        if (rc == -1)
+        {
+            perror("connect");
+            close(fd);
+            return -1;
+        }
     }
 
     if (!this.use_udp && setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) == -1)

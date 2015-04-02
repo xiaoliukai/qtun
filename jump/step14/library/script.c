@@ -347,10 +347,13 @@ int script_global_init(lua_State* lua)
 
 int script_load_config(lua_State* lua, library_conf_t* conf, const char* file_path)
 {
+    char path[MAX_PATH];
     lua_pushlightuserdata(lua, conf);
     lua_setglobal(lua, "__conf__");
     
-    if (luaL_dofile(lua, "../scripts/load_config.lua") != 0)
+    strcpy(path, this.this_path);
+    strcat(path, "scripts/load_config.lua");
+    if (luaL_dofile(lua, path) != 0)
     {
         fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
         lua_close(this.lua);
