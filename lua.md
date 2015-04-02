@@ -40,6 +40,14 @@
 | **type**   | table                         |
 | **desc**   | It's the object for global variable `this`, it has many properties follow. |
 
+### qtun.state.this\_path
+
+| key        | value                                  |
+| ---------- | -------------------------------------- |
+| **type**   | string                                 |
+| **access** | readonly                               |
+| **desc**   | Location for qtun program in realpath. |
+
 ### qtun.state.msg\_ident
 
 | key        | value                         |

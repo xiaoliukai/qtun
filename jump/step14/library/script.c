@@ -25,7 +25,9 @@ static int state_get(lua_State* lua)
     size_t len;
     const char* str = luaL_checklstring(lua, -1, &len);
 
-    if (strcmp(str, "msg_ident") == 0)
+    if (strcmp(str, "this_path") == 0)
+        lua_pushstring(lua, this.this_path);
+    else if (strcmp(str, "msg_ident") == 0)
         lua_pushinteger(lua, this.msg_ident);
     else if (strcmp(str, "msg_ttl") == 0)
         lua_pushinteger(lua, this.msg_ttl);
