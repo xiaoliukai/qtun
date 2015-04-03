@@ -1,3 +1,4 @@
+[![Gitter chat](https://badges.gitter.im/takezoe/gitbucket.png)](https://gitter.im/lwch/qtun)
 [![Build Status](https://travis-ci.org/lwch/qtun.svg?branch=master)](https://travis-ci.org/lwch/qtun)
 
 # 网络模型与协议
