@@ -1,0 +1,20 @@
+body {
+    padding-top: 70px;
+}
+.system {
+    font-weight: bold;
+    color: #FF9691;
+}
+.protection {
+    font-weight: bold;
+    color: #8A2BE2;
+}
+footer .container {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    text-align: center;
+}
+td .status-ok {
+    color: green;
+}
