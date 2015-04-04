@@ -1,3 +1,4 @@
+<?php require dirname(__FILE__).'/framework/base.php'; ?>
 <html>
     <head>
         <meta charset="utf-8">
@@ -8,7 +9,7 @@
         <link rel="stylesheet" href="/3rdParty/bootstrap3/css/bootstrap-theme.min.css">
     </head>
     <body>
-        <?php require __DIR__.'/framework/header.php'; ?>
+        <?php require ROOT.'/framework/header.php'; ?>
         <div class="container">
             See you later.
         </div>
