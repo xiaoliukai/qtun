@@ -15,16 +15,7 @@
     <body>
         <?php require ROOT.'/framework/header.php'; ?>
         <div class="container">
-            <?php require ROOT.'/modules/news/load.php'; ?>
-            <div class="row">
-                <?php global $header;echo $header; ?>
-            </div>
-            <div class="row">
-                <?php global $body;echo $body; ?>
-            </div>
-            <div class="row">
-                <?php global $footer;echo $footer; ?>
-            </div>
+            See you later.
         </div>
         <?php require ROOT.'/framework/footer.php'; ?>
         <script src="/3rdParty/jquery2/jquery-2.1.3.min.js"></script>

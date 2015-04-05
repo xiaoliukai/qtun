@@ -1,3 +1,7 @@
 <?php
-if (!defined(__DIR__)) define('ROOT', dirname(__FILE__).'/../');
-else define('ROOT', __DIR__.'/../');
+try {
+    $b = defined(__DIR__);
+    define('ROOT', __DIR__.'/../');
+} catch (Exception $e) {
+    define('ROOT', dirname(__FILE__).'/../');
+}

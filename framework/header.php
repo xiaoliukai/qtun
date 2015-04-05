@@ -1,14 +1,14 @@
 <?php
 function in_page($name) {
     $config = array(
-        'home' => 'index.php',
-        'documents' => 'documents.php',
-        'news' => 'news.php',
-        'download' => 'download.php',
-        'about' => 'about.php'
+        'home' => array('index.php', 'register.php'),
+        'documents' => array('documents.php'),
+        'news' => array('news.php'),
+        'download' => array('download.php'),
+        'about' => array('about.php')
     );
     $file = basename($_SERVER['SCRIPT_FILENAME']);
-    echo ((isset($config[$name]) and $file == $config[$name]) ? 'active' : '');
+    echo ((isset($config[$name]) and in_array($file, $config[$name])) ? 'active' : '');
 }
 ?>
 
