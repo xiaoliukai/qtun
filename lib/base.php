@@ -21,3 +21,9 @@ function get($params, $key, $def = null) {
     if ($def === null) throw new Exception('Missing param ['.$key.']');
     return $def;
 }
+
+function res($stat, $data = null) {
+    $ret = array('stat' => $stat);
+    if ($data !== null) $ret['data'] = $data;
+    return $ret;
+}

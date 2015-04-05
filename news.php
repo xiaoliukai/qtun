@@ -29,5 +29,8 @@
         <?php require ROOT.'/framework/footer.php'; ?>
         <script src="/3rdParty/jquery2/jquery-2.1.3.min.js"></script>
         <script src="/3rdParty/bootstrap3/js/bootstrap.min.js"></script>
+        <script src="/js/lib/common.js"></script>
+        <script src="/js/lib/pagger.js"></script>
+        <script src="/js/news.js"></script>
     </body>
 </html>

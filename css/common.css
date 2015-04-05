@@ -38,3 +38,6 @@ td .status-ok {
     font-size: 13px;
     color: grey;
 }
+.pagination>li>span {
+    cursor: pointer;
+}

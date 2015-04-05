@@ -5,10 +5,10 @@ $db = conn();
 $id = get($_REQUEST, 'id', '');
 
 if ($id === '') {
-    if (isset($_SESSION['news.cursor'])) {
-        $cursor = $_SESSION['news.cursor'];
+    if (isset($_SESSION['news.page'])) {
+        $page = $_SESSION['news.page'];
     } else {
-        $cursor = 0;
+        $page = 0;
     }
     $header = '<h2>
                     News
@@ -23,12 +23,12 @@ if ($id === '') {
                 </h2>';
     $sql = 'SELECT COUNT(1) FROM news';
     list($total) = $db->query($sql)->fetch(PDO::FETCH_NUM);
-    $sql = 'SELECT id, updated, title, LEFT(content, 200) AS content FROM news ORDER BY updated DESC LIMIT '.$cursor.', '.PERCOUNT;
-    $str = '<div class="panel-group">';
+    $sql = 'SELECT id, updated, title, LEFT(content, 200) AS content FROM news ORDER BY updated DESC LIMIT '.($page * PERCOUNT).', '.PERCOUNT;
+    $str = '<div class="panel-group" style="margin-bottom:0">';
     foreach ($db->query($sql) as $row) {
         $str .= '<div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title message-date-parent" style="cursor:pointer" data-toggle="collapse" data-target="#news_'.$row['id'].'">'
+                    <div class="panel-heading" style="cursor:pointer" data-toggle="collapse" data-target="#news_'.$row['id'].'">
+                        <h4 class="panel-title message-date-parent">'
                             .$row['title'].
                             '<div class="pull-right message-date">'.$row['updated'].'</div>
                         </h4>
@@ -43,7 +43,11 @@ if ($id === '') {
                     </div>
                 </div>';
     }
-    $body = $str.'</div>';
+    $str .= '</div>
+             <div class="pull-right">
+                 <div id="pagger" page="'.($page + 1).'" total="'.$total.'" per="'.PERCOUNT.'"></div>
+             </div>';
+    $body = $str;
     $footer = '';
 } else {
     $sql = 'SELECT title, content, updated FROM news WHERE id='.$id;
