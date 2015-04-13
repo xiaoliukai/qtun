@@ -27,3 +27,17 @@ function res($stat, $data = null) {
     if ($data !== null) $ret['data'] = $data;
     return $ret;
 }
+
+function uuid($len) {
+    $charmap = '`1234567890~!@#$%^&*()-=_+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $ret = '';
+    for ($i = 0; $i < $len; $i++) {
+        $ret .= substr($charmap, mt_rand(0, 233) % 78, 1);
+    }
+    return $ret;
+}
+
+function ret_http($ret) {
+    echo json_encode($ret);
+    exit;
+}

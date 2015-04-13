@@ -4,9 +4,7 @@ $(function() {
         $('#pagger').attr('total'),
         $('#pagger').attr('per'),
         function (page) {
-            call('/lib/api.php', {
-                module: 'news',
-                action: 'change_page',
+            call('/api/news/change_page.php', {
                 page: page
             }, function(data) {
                 $('.panel-group').empty();

@@ -1,7 +1,7 @@
 <?php
 function in_page($name) {
     $config = array(
-        'home' => array('index.php', 'register.php'),
+        'home' => array('index.php', 'register.php', 'login.php'),
         'documents' => array('documents.php'),
         'news' => array('news.php'),
         'download' => array('download.php'),

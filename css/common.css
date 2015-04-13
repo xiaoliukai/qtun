@@ -41,3 +41,15 @@ td .status-ok {
 .pagination>li>span {
     cursor: pointer;
 }
+.global-mask {
+    position: fixed;  
+    z-index: 1040;  
+    width: 100%;  
+    height: 100%;  
+    top: 0;  
+    left: 0;  
+    filter: alpha(opacity=50);
+    opacity: 0.5;  
+    overflow: hidden;  
+    background-color: #000; 
+}

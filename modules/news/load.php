@@ -12,7 +12,7 @@ if ($id === '') {
     }
     $header = '<h2>
                     News
-                    <div class="col-lg-3 pull-right" style="padding-right:0">
+                    <div class="col-lg-3 pull-right" style="padding-right:0;padding-left:0;margin-bottom:5px">
                         <div class="input-group">
                         <input type="text" class="form-control" placeholder="Search for...">
                             <span class="input-group-btn">
@@ -81,7 +81,8 @@ if ($id === '') {
                  </div>';
     } else {
       $footer = '<div style="margin-top:10px;margin-bottom:10px">
-                     <a href="/register.php">Register</a>
+                     <a href="/register.php">Register</a>&nbsp;
+                     <a href="/login.php">Login</a>
                  </div>';
     }
 }
