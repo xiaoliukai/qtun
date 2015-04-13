@@ -31,6 +31,25 @@ function in_page($name) {
                 <li class="<?php in_page('download'); ?>"><a href="/download.php">Download</a></li>
                 <li class="<?php in_page('about'); ?>"><a href="/about.php">About</a></li>
             </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="icon-user"></i> <span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                    <?php
+                        if (isset($_SESSION['_t'])) {
+                    ?>
+                        <li><a href="/index.php?logout">Logout</a></li>
+                    <?php
+                        } else {
+                    ?>
+                        <li><a href="register.php">Register</a></li>
+                        <li><a href="login.php">Login</a></li>
+                    <?php
+                        }
+                    ?>
+                    </ul>
+                </li>
+            </ul>
         </div>
     </div>
 </nav>

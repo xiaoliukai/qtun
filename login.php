@@ -10,6 +10,7 @@
 
         <link rel="stylesheet" href="/3rdParty/bootstrap3/css/bootstrap.min.css">
         <link rel="stylesheet" href="/3rdParty/bootstrap3/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="/3rdParty/Font-Awesome-3.2.1/css/font-awesome.min.css">
         <link rel="stylesheet" href="/css/common.css">
     </head>
     <body>
