@@ -6,6 +6,9 @@ before_script:
     - sudo apt-get update -q
     - sudo apt-get install zlib1g-dev openssl
 script: cd src/ && cmake . && make
+branches:
+    only:
+        - master
 notifications:
     recipients:
         - lwch748@gmail.com
