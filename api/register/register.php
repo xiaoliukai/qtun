@@ -9,9 +9,9 @@ function register($params) {
     $recvmsg = get($params, 'recvmsg', 1);
     $db = conn();
 
-    $salt1 = $_SESSION['salt'];
-    $salt2 = uuid(8);
-    $pass = sha1($pass.$salt2);
+    if (strlen($pass) != 32) return res(1);
+    $salt = uuid(8);
+    $pass = sha1($pass.$salt);
 
     $sql = "SELECT COUNT(1) FROM users WHERE name='$user'";
     list($have) = $db->query($sql)->fetch(PDO::FETCH_NUM);
@@ -19,7 +19,7 @@ function register($params) {
     if ($have) return res(1);
 
     $recvmsg = empty($recvmsg) ? 0 : 1;
-    $sql = "INSERT INTO `users`(`name`, `recvmsg`, `password`, `salt1`, `salt2`, `email`) VALUES('$user', b'$recvmsg', '$pass', '$salt1', '$salt2', '$email')";
+    $sql = "INSERT INTO `users`(`name`, `recvmsg`, `password`, `salt`, `email`) VALUES('$user', b'$recvmsg', '$pass', '$salt', '$email')";
     if ($db->exec($sql) === false) {
         return res(1);
     }

@@ -1,10 +1,5 @@
 <?php require dirname(__FILE__).'/framework/base.php'; ?>
 <?php require ROOT.'/lib/base.php'; ?>
-<?php
-$salt = uuid(8);
-setcookie('salt', $salt);
-$_SESSION['salt'] = $salt;
-?>
 <html>
     <head>
         <meta charset="utf-8">
