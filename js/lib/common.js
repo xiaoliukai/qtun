@@ -17,12 +17,7 @@ function call(url, params, callback, error, loading) {
         data: params,
         success: function(data) {
             switch (data.stat) {
-            case 404:
-                if (loading) hide_loading();
-                show_alert('Error', 'Undefined api');
-                error(data);
-                return;
-            case 500:
+            case 5000:
                 if (loading) hide_loading();
                 show_alert('Error', 'Internal Server Error');
                 error(data);
@@ -30,6 +25,20 @@ function call(url, params, callback, error, loading) {
             }
             if (loading) hide_loading();
             callback(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            switch (jqXHR.status) {
+            case 404:
+                if (loading) hide_loading();
+                show_alert('Error', 'Undefined api');
+                error({stat: 404});
+                break;
+            default:
+                if (loading) hide_loading();
+                error({stat: jqXHR.status});
+                console.error({stat: jqXHR.status, data: errorThrown});
+                break;
+            }
         }
     });
 }

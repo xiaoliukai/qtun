@@ -1,5 +1,4 @@
-<?php require dirname(__FILE__).'/framework/base.php'; ?>
-<?php require ROOT.'/lib/base.php'; ?>
+<?php require dirname(__FILE__).'/lib/base.php'; ?>
 <html>
     <head>
         <meta charset="utf-8">
@@ -93,12 +92,12 @@
             </div>
             <!-- panel -->
         </div>
-        <?php require ROOT.'/framework/footer.php'; ?>
         <script src="/3rdParty/jquery2/jquery-2.1.3.min.js"></script>
         <script src="/3rdParty/plugin/jquery.crypt.js"></script>
         <script src="/3rdParty/plugin/jquery.cookie-1.4.1.min.js"></script>
         <script src="/3rdParty/bootstrap3/js/bootstrap.min.js"></script>
         <script src="/js/lib/common.js"></script>
         <script src="/js/register.js"></script>
+        <?php require ROOT.'/framework/footer.php'; ?>
     </body>
 </html>

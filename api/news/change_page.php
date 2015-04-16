@@ -1,6 +1,5 @@
 <?php
-require dirname(__FILE__).'/../../framework/base.php';
-require ROOT.'/lib/base.php';
+require dirname(__FILE__).'/../../lib/base.php';
 
 function change_page($params) {
     define('PERCOUNT', 25);

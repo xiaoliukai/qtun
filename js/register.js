@@ -35,7 +35,7 @@ var page = {
             if (!page.check_input()) return;
             var md5 = $().crypt({
                 method: "md5",
-                source: $('#pass1').val() + $.cookie('salt')
+                source: $('#pass1').val()
             });
             call('/api/register/register.php', {
                 user: $('#user').val(),
@@ -48,8 +48,7 @@ var page = {
                         window.location.href = '/login.php';
                     });
                     return;
-                }
-                if (data.stat == 1) {
+                } else /* if (data.stat == 1) */ {
                     $('#user-check-group').empty();
                     $('#user-check-group').append('<font color="red" style="margin-top:8px">user exists</font>');
                 }
@@ -58,11 +57,11 @@ var page = {
     },
     check_input: function() {
         if ($('#user').val().length == 0) {
-            show_alert('Error', 'Please input username');
+            show_alert('Error', 'Please input your username');
             return false;
         }
         if ($('#pass1').val().length == 0 || $('#pass2').val().length == 0) {
-            show_alert('Error', 'Please input password');
+            show_alert('Error', 'Please input your password');
             return false;
         }
         if ($('#email').val().length) {

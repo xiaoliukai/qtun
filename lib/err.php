@@ -6,12 +6,12 @@ function err_handler($errno, $errstr, $errfile, $errline, $errcontext) {
         'errfile' => $errfile,
         'errline' => $errline
     );
-    echo json_encode(res(500, $ret));
+    echo json_encode(res(5000, $ret));
     exit;
 }
 
 function exp_handler($e) {
-    echo json_encode(res(500, var_export($e, true)));
+    echo json_encode(res(5000, var_export($e, true)));
     exit;
 }
 

@@ -1,6 +1,5 @@
 <?php
-require dirname(__FILE__).'/../framework/base.php';
-require ROOT.'/lib/base.php';
+require dirname(__FILE__).'/../lib/base.php';
 
 $db = conn();
 $db->exec("CREATE TABLE IF NOT EXISTS `news` (

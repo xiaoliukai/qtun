@@ -34,11 +34,11 @@ function in_page($name) {
             <ul class="nav navbar-nav navbar-right">
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="icon-user"></i> <span class="caret"></span></a>
-                    <ul class="dropdown-menu" role="menu">
+                    <ul id="user-menu" class="dropdown-menu" role="menu">
                     <?php
                         if (isset($_SESSION['_t'])) {
                     ?>
-                        <li><a href="/index.php?logout">Logout</a></li>
+                        <li><a id="__logout__" href="#">Logout</a></li>
                     <?php
                         } else {
                     ?>
