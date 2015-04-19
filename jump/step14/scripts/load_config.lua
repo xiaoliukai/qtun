@@ -17,7 +17,7 @@ local function set_true(key)
 	qtun.conf[key] = true
 end
 
-local file = io.open('config', 'r')
+local file = io.open(qtun.conf.conf_file, 'r')
 while true do
 ::start::
 	local line = file:read('*line')
