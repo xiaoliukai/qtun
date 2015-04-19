@@ -46,10 +46,28 @@ ADD_HEADER_DEFINITION(unistd.h HAVE_UNISTD_H)
 
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/source.cmake)
 
-SET(THIRDPARTY_PATH "${CMAKE_CURRENT_LIST_DIR}/../../3rdParty")
-INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/zlib.cmake)
-INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/openssl.cmake)
-INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/lua.cmake)
+FIND_PATH(THIRDPARTY_PATH 3rdParty
+    ${CMAKE_CURRENT_SOURCE_DIR}/../3rdParty/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdParty/
+)
+
+FIND_PATH(ZLIB_PATH zlib.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/
+)
+INCLUDE(${ZLIB_PATH}/zlib.cmake)
+
+FIND_PATH(OPENSSL_PATH openssl.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/
+)
+INCLUDE(${OPENSSL_PATH}/openssl.cmake)
+
+FIND_PATH(LUA_PATH lua.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/
+)
+INCLUDE(${LUA_PATH}/lua.cmake)
 
 INCLUDE_DIRECTORIES(
     ${OPENSSL_INCLUDE_DIR}
