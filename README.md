@@ -34,9 +34,10 @@
 3. cd src && mkdir build && cd build
 4. cmake -DCMAKE\_BUILD\_TYPE=RELEASE ..
 5. make
-6. 使用命令`sudo nohup ./step11 -l10.0.1.1 -g 2>&1 1>/dev/null &`运行服务器端程序并绑定到默认端口6687，这里的step11为当前最新版本，这里可以使用-p参数绑定到其他端口
-7. 修改/etc/sysctl.conf，增加或修改net.ipv4.ip\_forward = 1，使用命令sysctl -p使其生效
-8. 检查iptables中的nat表是否支持tun0网卡转发，若不支持则使用命令sudo iptables -t nat -A POSTROUTING -o tun0使其支持
+6. 使用命令`ln -s ../scripts .`建立scripts目录的软链接
+7. 使用命令`sudo nohup ./step14 -c ../server.conf 2>&1 1>/dev/null &`运行服务器端程序并绑定到默认端口6687，这里的step14为当前最新版本，这里可以使用-p参数绑定到其他端口
+8. 修改/etc/sysctl.conf，增加或修改net.ipv4.ip\_forward = 1，使用命令sysctl -p使其生效
+9. 检查iptables中的nat表是否支持tun0网卡转发，若不支持则使用命令sudo iptables -t nat -A POSTROUTING -o tun0使其支持
 
 ## client端
 
@@ -44,26 +45,19 @@
 2. 安装cmake和gcc
 3. cd src && mkdir build && cd build
 4. cmake -DCMAKE\_BUILD\_TYPE=RELEASE ..
-5. 使用命令`sudo nohup ./step11 -l10.0.1.2 -s服务器IP -g 2>&1 1>/dev/null &`连接服务器，这里的step11为当前最新版本
-6. 使用命令`sudo route add 服务器IP gw 默认网关`添加到服务器的路由
-7. 使用命令`sudo route del -net 0.0.0.0/0 dev eth0`删除默认路由
-8. 使用命令`sudo route add -net 0.0.0.0/0 dev tun0`将默认路由指向tun0网卡
-9. 使用诸如chnroutes工具创建国内路由到原默认网关
+5. 使用命令`ln -s ../scripts .`建立scripts目录的软链接
+6. 修改`../client.conf`配置文件中server的地址为您的服务器IP或域名
+7. 使用命令`sudo nohup ./step14 -c ../client.conf 2>&1 1>/dev/null &`连接服务器，这里的step14为当前最新版本
+8. 使用命令`sudo route add 服务器IP gw 默认网关`添加到服务器的路由
+9. 使用命令`sudo route del -net 0.0.0.0/0 dev eth0`删除默认路由
+10. 使用命令`sudo route add -net 0.0.0.0/0 dev tun0`将默认路由指向tun0网卡
+11. 使用诸如chnroutes工具创建国内路由到原默认网关
 
 ## 可用参数
 
 短命令 | 长命令         | 后接参数           | 默认值               | 说明
 ------ | -------------- | ------------------ | -------------------- | -----
--a     | --aes          | 密钥文件路径       | 无                   | AES加密，若指定该参数则使用该密钥进行加密通信，密钥长度必须为`32`、`40`或`48`字节
--d     | --des          | 密钥文件路径       | 无                   | DES加密，若指定该参数则使用该密钥进行加密通信，密钥长度必须为`16`、`24`或`32`字节
--g     | --gzip         | 无                 | 无                   | 若指定该参数则使用gzip进行压缩
--m     | --mask         | 掩码长度           | 24                   | 该参数指定了服务端所划分的子网网段
--l     | --localip      | 本地IP地址         | 无                   | 该IP地址被绑定到虚拟网卡tun`n`
--s     | --server       | 服务器IP地址或域名 | 无                   | 该参数指定了服务器的IP地址或域名，若没有指定该参数则当前运行的是服务端
--p     | --port         | 端口号             | 6687                 | 若当前运行的是服务端则为其绑定的端口号，否则为连接到服务器的端口号
--v     | --log-level    | log等级            | LOG\_WARNING对应的值 | 详见syslog.h中定义的值
--t     | --internal-mtu | mtu值              | 1492                 | 内部使用的mtu值，过大的数据包将被分片
--u     | --udp          | 无                 | 无                   | 若指定该参数则使用UDP协议进行通信
+-c     | --config       | 配置文件地址       | 无                   | 配置文件所在位置
 
 # 关于
 
