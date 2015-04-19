@@ -208,12 +208,12 @@
 
 ### qtun.conf.server\_port
 
-| key         | value                               |
-| ----------- | ----------------------------------- |
-| **type**    | number                              |
-| **access**  | read and write                      |
-| **default** | 6687                                |
-| **desc**    | It's using for client, server port. |
+| key         | value                                                      |
+| ----------- | ---------------------------------------------------------- |
+| **type**    | number                                                     |
+| **access**  | read and write                                             |
+| **default** | 6687                                                       |
+| **desc**    | It's the port for server to bind and for client to connect |
 
 ### qtun.conf.localip
 
