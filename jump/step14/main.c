@@ -111,8 +111,17 @@ int main(int argc, char* argv[])
 #else
     localfd = remotefd = -1;
 #endif
-    
-    init_path(argv[0]);
+    {
+        char path[MAX_PATH] = {0};
+#ifdef WIN32
+        strcpy(path, argv[0]);
+#else
+        {
+            ssize_t unused = readlink("proc/self/exe", path, sizeof(path));
+        }
+#endif
+        init_path(argv[0]);
+    }
     conf_init(&conf);
 
     memset(&this, 0, sizeof(this));
@@ -122,7 +131,9 @@ int main(int argc, char* argv[])
         switch (opt)
         {
         case 'c':
-            realpath(optarg, conf.conf_file);
+            {
+                char* unused = realpath(optarg, conf.conf_file);
+            }
             break;
         default:
             fprintf(stderr, "param error\n");

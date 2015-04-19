@@ -120,7 +120,7 @@ int init_path(char* cmd)
 {
     char path[MAX_PATH];
     char* end;
-    realpath(cmd, path);
+    end = realpath(cmd, path);
     end = path + strlen(path);
     while (end > path && *end != '/' && *end != '\\') --end;
     memset(this.this_path, 0, sizeof(this.this_path));
