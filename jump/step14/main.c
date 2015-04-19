@@ -105,6 +105,8 @@ int main(int argc, char* argv[])
     openlog(argv[0], LOG_PERROR | LOG_CONS | LOG_PID, LOG_LOCAL0);
 #endif
 
+    memset(&this, 0, sizeof(this));
+
 #ifdef WIN32
     remotefd = -1;
     localfd = INVALID_HANDLE_VALUE;
@@ -117,14 +119,12 @@ int main(int argc, char* argv[])
         strcpy(path, argv[0]);
 #else
         {
-            ssize_t unused = readlink("proc/self/exe", path, sizeof(path));
+            ssize_t unused = readlink("/proc/self/exe", path, sizeof(path));
         }
 #endif
-        init_path(argv[0]);
+        init_path(path);
     }
     conf_init(&conf);
-
-    memset(&this, 0, sizeof(this));
 
     while ((opt = getopt_long(argc, argv, short_options, long_options, NULL)) != -1)
     {
