@@ -118,8 +118,10 @@ int main(int argc, char* argv[])
 #ifdef WIN32
         strcpy(path, argv[0]);
 #else
+        if (readlink("/proc/self/exe", path, sizeof(path)) == -1)
         {
-            ssize_t unused = readlink("/proc/self/exe", path, sizeof(path));
+            perror("readlink");
+            return 1;
         }
 #endif
         init_path(path);
@@ -131,8 +133,10 @@ int main(int argc, char* argv[])
         switch (opt)
         {
         case 'c':
+            if (realpath(optarg, conf.conf_file) == NULL)
             {
-                char* unused = realpath(optarg, conf.conf_file);
+                perror("realpath");
+                return 1;
             }
             break;
         default:
