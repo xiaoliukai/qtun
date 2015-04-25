@@ -20,8 +20,13 @@
 #include <unistd.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 #include <openssl/aes.h>
 
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,6 +122,20 @@ int main(int argc, char* argv[])
         char path[MAX_PATH] = {0};
 #ifdef WIN32
         strcpy(path, argv[0]);
+#elif defined(__APPLE__)
+        char tmp_path[sizeof(path)] = {0};
+        uint32_t len = sizeof(path);
+        if (_NSGetExecutablePath(tmp_path, &len) == -1) {
+            perror("_NSGetExecutablePath");
+            return 1;
+        }
+        if (readlink(tmp_path, path, sizeof(path)) == -1) {
+            if (errno == EINVAL) strcpy(path, tmp_path);
+            else {
+                perror("readlink");
+                return 1;
+            }
+        }
 #else
         if (readlink("/proc/self/exe", path, sizeof(path)) == -1)
         {
