@@ -1,5 +1,7 @@
 <?php
 require dirname(__FILE__).'/../lib/base.php';
 
-unset($_SESSION['_t']);
+foreach (array_keys($_SESSION) as $key) {
+    unset($_SESSION[$key]);
+}
 echo '{"stat":0}';

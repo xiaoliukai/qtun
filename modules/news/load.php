@@ -69,13 +69,13 @@ if ($id === '') {
     if (isset($_SESSION['_t'])) {
       $footer = '<div style="margin-top:10px;margin-bottom:10px">
                      <div class="row">
-                         <div class="col-lg-3">
+                         <div class="col-lg-6">
                              <textarea class="form-control" rows="10"></textarea>
                          </div>
                      </div>
                      <div class="row">
                          <div class="col-lg-1" style="margin-top:10px">
-                             <input class="btn btn-default" type="button" value="Reply"></input>
+                             <input id="reply-news" class="btn btn-default" type="button" value="Reply"></input>
                          </div>
                      </div>
                  </div>';
