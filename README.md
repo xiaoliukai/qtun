@@ -24,6 +24,7 @@
 11. [Jump The Great Firewall【step11 数据分片】](http://blog.q-devel.com/jump-the-great-firewall-step11/)
 12. [Jump The Great Firewall【step12 支持UDP协议】](http://blog.q-devel.com/jump-the-great-firewall-step12/)
 13. [Jump The Great Firewall【step13 支持Windows】](http://blog.q-devel.com/jump-the-great-firewall-step13/)
+14. [Jump The Great Firewall【step14 嵌入lua】](http://blog.q-devel.com/jump-the-great-firewall-step14/)
 
 # 部署
 
