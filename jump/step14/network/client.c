@@ -46,7 +46,7 @@ int connect_server(char* host, unsigned short port)
     int flag = 1;
 #endif
 
-    this.client.fd = this.remotefd = fd = socket(AF_INET, this.use_udp ? SOCK_DGRAM : SOCK_STREAM, 0);
+    qtun->client.fd = qtun->remotefd = fd = socket(AF_INET, qtun->use_udp ? SOCK_DGRAM : SOCK_STREAM, 0);
     if (fd == -1)
     {
         perror("socket");
@@ -63,10 +63,10 @@ int connect_server(char* host, unsigned short port)
     }
     addr.sin_addr = *(struct in_addr*)he->h_addr_list[0];
 
-    this.client.remote_ip = addr.sin_addr.s_addr;
-    this.client.addr = addr;
+    qtun->client.remote_ip = addr.sin_addr.s_addr;
+    qtun->client.addr = addr;
 
-    if (!this.use_udp)
+    if (!qtun->use_udp)
     {        
         rc = connect(fd, (struct sockaddr*)&addr, sizeof(addr));
         if (rc == -1)
@@ -77,17 +77,17 @@ int connect_server(char* host, unsigned short port)
         }
     }
 
-    if (!this.use_udp && setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) == -1)
+    if (!qtun->use_udp && setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) == -1)
     {
         perror("setsockopt");
     }
 
-    msg = new_login_msg(this.localip, 0, 0, 1);
+    msg = new_login_msg(qtun->localip, 0, 0, 1);
     if (msg)
     {
-        write_c(&this.client, msg, sizeof(msg_t) + msg_data_length(msg));
-        pool_room_free(&this.pool, MSG_ROOM_IDX);
-        if (read_msg_t(&this.client, &msg, 5) > 0)
+        write_c(&qtun->client, msg, sizeof(msg_t) + msg_data_length(msg));
+        pool_room_free(&qtun->pool, MSG_ROOM_IDX);
+        if (read_msg_t(&qtun->client, &msg, 5) > 0)
         {
             unsigned int ip;
             unsigned char mask;
@@ -102,46 +102,46 @@ int connect_server(char* host, unsigned short port)
             unsigned int gateway;
             unsigned short internal_mtu;
             struct in_addr a;
-            if (msg->compress != this.compress || msg->encrypt != this.encrypt)
+            if (msg->compress != qtun->compress || msg->encrypt != qtun->encrypt)
             {
                 SYSLOG(LOG_ERR, "compress algorithm or encrypt algorithm is not same");
-                pool_room_free(&this.pool, RECV_ROOM_IDX);
+                pool_room_free(&qtun->pool, RECV_ROOM_IDX);
                 goto end;
             }
             if (!parse_login_reply_msg(msg, &ip, &gateway, &mask, &internal_mtu)) goto end;
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             if (ip == 0)
             {
                 SYSLOG(LOG_ERR, "Not enough ip address");
                 goto end;
             }
-            if (ip != this.localip)
+            if (ip != qtun->localip)
             {
                 char saddr[16], daddr[16];
-                a.s_addr = this.localip;
+                a.s_addr = qtun->localip;
                 strcpy(saddr, inet_ntoa(a));
                 a.s_addr = ip;
                 strcpy(daddr, inet_ntoa(a));
                 SYSLOG(LOG_ERR, "%s is inuse, but %s is not inuse", saddr, daddr);
                 goto end;
             }
-            hash_init(&this.client.recv_table, functor, 11);
-            this.client.local_ip = gateway;
-            this.client.fd = fd;
-            this.client.internal_mtu = ntohs(internal_mtu);
-            this.client.max_length = ROUND_UP(this.client.internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (this.use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
-            if (this.use_udp)
+            hash_init(&qtun->client.recv_table, functor, 11);
+            qtun->client.local_ip = gateway;
+            qtun->client.fd = fd;
+            qtun->client.internal_mtu = ntohs(internal_mtu);
+            qtun->client.max_length = ROUND_UP(qtun->client.internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (qtun->use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
+            if (qtun->use_udp)
             {
-                this.recv_buffer_len = this.client.max_length + sizeof(msg_t);
-                this.recv_buffer = pool_room_realloc(&this.pool, RECV_ROOM_IDX, this.recv_buffer_len);
-                if (this.recv_buffer == NULL)
+                qtun->recv_buffer_len = qtun->client.max_length + sizeof(msg_t);
+                qtun->recv_buffer = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->recv_buffer_len);
+                if (qtun->recv_buffer == NULL)
                 {
                     SYSLOG(LOG_INFO, "Not enough memory");
                     goto end;
                 }
             }
-            this.netmask = mask;
-            this.keepalive = (unsigned int)time(NULL);
+            qtun->netmask = mask;
+            qtun->keepalive = (unsigned int)time(NULL);
 #ifdef WIN32 // 将对端内网IP添加到ARP表
             {
                 char cmd[1024];
@@ -170,7 +170,7 @@ static void client_process_sys(msg_t* msg)
     case SYS_PING:
         if (IS_SYS_REPLY(msg->sys))
         {
-            this.keepalive_replyed = 1;
+            qtun->keepalive_replyed = 1;
             SYSLOG(LOG_INFO, "reply keepalive message received");
         }
         break;
@@ -184,7 +184,7 @@ static void process_msg(msg_t* msg)
     int sys;
     size_t room_id;
 
-    if (!check_msg(&this.client, msg)) return;
+    if (!check_msg(&qtun->client, msg)) return;
 
     if (msg->syscontrol)
     {
@@ -192,30 +192,30 @@ static void process_msg(msg_t* msg)
     }
     else if (msg->zone.clip)
     {
-        if (!process_clip_msg(this.localfd, &this.client, msg, &room_id)) goto end;
+        if (!process_clip_msg(qtun->localfd, &qtun->client, msg, &room_id)) goto end;
     }
     else if (parse_msg(msg, &sys, &buffer, &len, &room_id))
     {
         ssize_t written;
 #ifdef WIN32
-        WriteFile(this.localfd, buffer, len, &written, NULL);
+        WriteFile(qtun->localfd, buffer, len, &written, NULL);
 #else
-        written = write(this.localfd, buffer, len);
+        written = write(qtun->localfd, buffer, len);
 #endif
         SYSLOG(LOG_INFO, "write local length: %ld", written);
     }
     else
         SYSLOG(LOG_WARNING, "Parse message error");
 end:
-    if (buffer) pool_room_free(&this.pool, room_id);
-    if (!this.use_udp)
+    if (buffer) pool_room_free(&qtun->pool, room_id);
+    if (!qtun->use_udp)
     {
-        this.client.status = (this.client.status & ~CLIENT_STATUS_WAITING_BODY) | CLIENT_STATUS_WAITING_HEADER;
-        this.client.want = sizeof(msg_t);
-        this.client.read = this.client.buffer;
-        this.client.buffer_len = this.client.want;
+        qtun->client.status = (qtun->client.status & ~CLIENT_STATUS_WAITING_BODY) | CLIENT_STATUS_WAITING_HEADER;
+        qtun->client.want = sizeof(msg_t);
+        qtun->client.read = qtun->client.buffer;
+        qtun->client.buffer_len = qtun->client.want;
     }
-    ++this.msg_ttl;
+    ++qtun->msg_ttl;
 }
 
 static int client_process(int max, fd_set* set)
@@ -227,25 +227,25 @@ static int client_process(int max, fd_set* set)
         ssize_t readen;
 
 #ifdef WIN32
-        ReadFile(this.localfd, buffer, sizeof(buffer), &readen, NULL);
+        ReadFile(qtun->localfd, buffer, sizeof(buffer), &readen, NULL);
 #else
-        readen = read(this.localfd, buffer, sizeof(buffer));
+        readen = read(qtun->localfd, buffer, sizeof(buffer));
 #endif
         if (readen > 0)
         {
             group = new_msg_group(buffer, (unsigned short)readen);
             if (group)
             {
-                ssize_t written = send_msg_group(&this.client, group);
+                ssize_t written = send_msg_group(&qtun->client, group);
                 msg_group_free(group);
                 SYSLOG(LOG_INFO, "send msg length: %ld", written);
             }
         }
     }
-    if (FD_ISSET(this.remotefd, set))
+    if (FD_ISSET(qtun->remotefd, set))
     {
-        ssize_t rc = this.use_udp ? udp_read(this.remotefd, this.recv_buffer, this.recv_buffer_len, NULL, NULL)
-                                  : read_pre(this.remotefd, this.client.read, this.client.want);
+        ssize_t rc = qtun->use_udp ? udp_read(qtun->remotefd, qtun->recv_buffer, qtun->recv_buffer_len, NULL, NULL)
+                                  : read_pre(qtun->remotefd, qtun->client.read, qtun->client.want);
         if (rc == 0)
         {
             SYSLOG(LOG_ERR, "connection closed");
@@ -257,41 +257,41 @@ static int client_process(int max, fd_set* set)
             perror("read");
             return RETURN_READ_ERROR;
         }
-        else if (this.use_udp) // use udp
+        else if (qtun->use_udp) // use udp
         {
-            process_msg((msg_t*)this.recv_buffer);
+            process_msg((msg_t*)qtun->recv_buffer);
         }
         else // use tcp
         {
-            this.client.read += rc;
-            this.client.want -= rc;
-            if (this.client.want == 0)
+            qtun->client.read += rc;
+            qtun->client.want -= rc;
+            if (qtun->client.want == 0)
             {
-                if (IS_CLIENT_STATUS_WAITING_HEADER(this.client.status))
+                if (IS_CLIENT_STATUS_WAITING_HEADER(qtun->client.status))
                 {
-                    size_t len = msg_data_length((msg_t*)this.client.buffer);
+                    size_t len = msg_data_length((msg_t*)qtun->client.buffer);
                     if (len)
                     {
-                        msg_t* msg = (msg_t*)this.client.buffer;
-                        this.client.status = (this.client.status & ~CLIENT_STATUS_WAITING_HEADER) | CLIENT_STATUS_WAITING_BODY;
+                        msg_t* msg = (msg_t*)qtun->client.buffer;
+                        qtun->client.status = (qtun->client.status & ~CLIENT_STATUS_WAITING_HEADER) | CLIENT_STATUS_WAITING_BODY;
                         if (msg->zone.clip)
                         {
-                            if (msg->zone.last) this.client.want = len % this.client.max_length;
-                            else this.client.want = this.client.max_length;
+                            if (msg->zone.last) qtun->client.want = len % qtun->client.max_length;
+                            else qtun->client.want = qtun->client.max_length;
                         }
-                        else this.client.want = len;
-                        this.client.buffer_len = sizeof(msg_t) + this.client.want;
-                        this.client.buffer = pool_room_realloc(&this.pool, RECV_ROOM_IDX, this.client.buffer_len);
-                        if (this.client.buffer == NULL)
+                        else qtun->client.want = len;
+                        qtun->client.buffer_len = sizeof(msg_t) + qtun->client.want;
+                        qtun->client.buffer = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->client.buffer_len);
+                        if (qtun->client.buffer == NULL)
                         {
                             SYSLOG(LOG_ERR, "Not enough memory");
                             exit(1);
                         }
-                        this.client.read = ((msg_t*)this.client.buffer)->data;
+                        qtun->client.read = ((msg_t*)qtun->client.buffer)->data;
                     }
-                    else process_msg((msg_t*)this.client.buffer);
+                    else process_msg((msg_t*)qtun->client.buffer);
                 }
-                else process_msg((msg_t*)this.client.buffer);
+                else process_msg((msg_t*)qtun->client.buffer);
             }
         }
     }
@@ -305,17 +305,17 @@ void client_loop(fd_type remotefd, local_fd_type localfd)
     int keepalive_send = 0;
     int rc;
 
-    this.remotefd = remotefd;
-    this.localfd = localfd;
-    if (!this.use_udp)
+    qtun->remotefd = remotefd;
+    qtun->localfd = localfd;
+    if (!qtun->use_udp)
     {
-        this.client.status = CLIENT_STATUS_NORMAL | CLIENT_STATUS_WAITING_HEADER;
-        this.client.want = sizeof(msg_t);
-        this.client.buffer = this.client.read = pool_room_realloc(&this.pool, RECV_ROOM_IDX, this.client.want);
-        this.client.buffer_len = this.client.want;
+        qtun->client.status = CLIENT_STATUS_NORMAL | CLIENT_STATUS_WAITING_HEADER;
+        qtun->client.want = sizeof(msg_t);
+        qtun->client.buffer = qtun->client.read = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->client.want);
+        qtun->client.buffer_len = qtun->client.want;
     }
 
-    this.keepalive_replyed = 1;
+    qtun->keepalive_replyed = 1;
     while (1)
     {
         struct timeval tv = {0, 1};
@@ -328,14 +328,14 @@ void client_loop(fd_type remotefd, local_fd_type localfd)
         max = remotefd > localfd ? remotefd : localfd;
 #endif
 
-        if (this.keepalive_replyed && (time(NULL) - this.keepalive) > KEEPALIVE_INTERVAL)
+        if (qtun->keepalive_replyed && (time(NULL) - qtun->keepalive) > KEEPALIVE_INTERVAL)
         {
             msg_t* msg = new_keepalive_msg(1);
-            write_c(&this.client, msg, sizeof(msg_t));
+            write_c(&qtun->client, msg, sizeof(msg_t));
             SYSLOG(LOG_INFO, "send keepalive message");
-            this.keepalive = (unsigned int)time(NULL);
-            this.keepalive_replyed = 0;
-            pool_room_free(&this.pool, MSG_ROOM_IDX);
+            qtun->keepalive = (unsigned int)time(NULL);
+            qtun->keepalive_replyed = 0;
+            pool_room_free(&qtun->pool, MSG_ROOM_IDX);
             keepalive_send = 1;
         }
 
@@ -345,17 +345,17 @@ void client_loop(fd_type remotefd, local_fd_type localfd)
         {
         case RETURN_CONNECTION_CLOSED:
         case RETURN_READ_ERROR:
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             return;
         }
 
-        if (keepalive_send && !this.keepalive_replyed && (time(NULL) - this.keepalive) > KEEPALIVE_TIMEOUT)
+        if (keepalive_send && !qtun->keepalive_replyed && (time(NULL) - qtun->keepalive) > KEEPALIVE_TIMEOUT)
         {
             SYSLOG(LOG_INFO, "keepalive reply timeouted, connection closed");
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             return;
         }
-        checkout_ttl(&this.client.recv_table);
+        checkout_ttl(&qtun->client.recv_table);
     }
 }
 

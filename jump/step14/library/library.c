@@ -10,7 +10,7 @@
 #include "script.h"
 #include "library.h"
 
-this_t this;
+qtun_t* qtun;
 
 int library_init(library_conf_t conf)
 {
@@ -24,33 +24,33 @@ int library_init(library_conf_t conf)
 
     init_msg_process_handler();
 
-    if (*(unsigned char*)&en == 0x12) this.little_endian = 0;
-    else this.little_endian = 1;
-    this.msg_ident    = 0;
-    this.msg_ttl      = 0;
-    this.localip      = conf.localip;
-    this.log_level    = conf.log_level;
-    this.internal_mtu = conf.internal_mtu;
+    if (*(unsigned char*)&en == 0x12) qtun->little_endian = 0;
+    else qtun->little_endian = 1;
+    qtun->msg_ident    = 0;
+    qtun->msg_ttl      = 0;
+    qtun->localip      = conf.localip;
+    qtun->log_level    = conf.log_level;
+    qtun->internal_mtu = conf.internal_mtu;
 #ifdef WIN32
-    strcpy(this.dev_symbol, conf.dev_symbol);
+    strcpy(qtun->dev_symbol, conf.dev_symbol);
 #endif
-    this.max_length   = ROUND_UP(conf.internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (conf.use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
-    this.use_udp      = conf.use_udp;
-    this.compress     = 0;
-    this.encrypt      = 0;
-    this.netmask      = conf.netmask;
-    this.keepalive    = 0;
-    this.keepalive_replyed = 0;
+    qtun->max_length   = ROUND_UP(conf.internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (conf.use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
+    qtun->use_udp      = conf.use_udp;
+    qtun->compress     = 0;
+    qtun->encrypt      = 0;
+    qtun->netmask      = conf.netmask;
+    qtun->keepalive    = 0;
+    qtun->keepalive_replyed = 0;
 
-    active_vector_init(&this.clients, functor_clients);
-    pool_init(&this.pool);
-    group_pool_init(&this.group_pool);
+    active_vector_init(&qtun->clients, functor_clients);
+    pool_init(&qtun->pool);
+    group_pool_init(&qtun->group_pool);
 
     if (conf.use_udp)
     {
-        this.recv_buffer_len = (sizeof(msg_t) + sizeof(sys_login_msg_t)) << 1; // enough for sys login msg
-        this.recv_buffer = pool_room_alloc(&this.pool, RECV_ROOM_IDX, this.recv_buffer_len);
-        if (this.recv_buffer == NULL)
+        qtun->recv_buffer_len = (sizeof(msg_t) + sizeof(sys_login_msg_t)) << 1; // enough for sys login msg
+        qtun->recv_buffer = pool_room_alloc(&qtun->pool, RECV_ROOM_IDX, qtun->recv_buffer_len);
+        if (qtun->recv_buffer == NULL)
         {
             SYSLOG(LOG_ERR, "Not enough memory");
             exit(1);
@@ -71,19 +71,19 @@ int library_init(library_conf_t conf)
             SYSLOG(LOG_ERR, "can not open aes key file");
             return 0;
         }
-        len = (ssize_t)fread(this.aes_iv, sizeof(char), sizeof(this.aes_iv), fp);
-        if (len != sizeof(this.aes_iv))
+        len = (ssize_t)fread(qtun->aes_iv, sizeof(char), sizeof(qtun->aes_iv), fp);
+        if (len != sizeof(qtun->aes_iv))
         {
             SYSLOG(LOG_ERR, "error aes iv");
             return 0;
         }
-        len = (ssize_t)fread(this.aes_key, sizeof(char), sizeof(this.aes_key), fp);
+        len = (ssize_t)fread(qtun->aes_key, sizeof(char), sizeof(qtun->aes_key), fp);
         if (len != 16 && len != 24 && len != 32)
         {
             SYSLOG(LOG_ERR, "error aes key file");
             return 0;
         }
-        this.aes_key_len = len << 3;
+        qtun->aes_key_len = len << 3;
         fclose(fp);
     }
 
@@ -97,19 +97,19 @@ int library_init(library_conf_t conf)
             SYSLOG(LOG_ERR, "can not open des key file");
             return 0;
         }
-        len = (ssize_t)fread(this.des_iv, sizeof(char), sizeof(this.des_iv), fp);
-        if (len != sizeof(this.des_iv))
+        len = (ssize_t)fread(qtun->des_iv, sizeof(char), sizeof(qtun->des_iv), fp);
+        if (len != sizeof(qtun->des_iv))
         {
             SYSLOG(LOG_ERR, "error des iv");
             return 0;
         }
-        len = (ssize_t)fread(this.des_key, sizeof(char), sizeof(this.des_key), fp);
+        len = (ssize_t)fread(qtun->des_key, sizeof(char), sizeof(qtun->des_key), fp);
         if (len != DES_KEY_SZ && len != DES_KEY_SZ * 2 && len != DES_KEY_SZ * 3)
         {
             SYSLOG(LOG_ERR, "error des key file");
             return 1;
         }
-        this.des_key_len = len;
+        qtun->des_key_len = len;
         fclose(fp);
     }
 
@@ -118,44 +118,48 @@ int library_init(library_conf_t conf)
 
 int init_path(char* cmd)
 {
-    char path[MAX_PATH];
+    char* path = realpath(cmd, NULL);
     char* end;
-    end = realpath(cmd, path);
+    if (path == NULL) {
+        perror("realpath");
+        exit(1);
+    }
     end = path + strlen(path);
     while (end > path && *end != '/' && *end != '\\') --end;
-    memset(this.this_path, 0, sizeof(this.this_path));
-    memcpy(this.this_path, path, end - path + 1);
+    memset(qtun->this_path, 0, sizeof(qtun->this_path));
+    memcpy(qtun->this_path, path, end - path + 1);
+    free(path);
     return 1;
 }
 
 int init_lua()
 {
-    char path[MAX_PATH];
-    this.lua = luaL_newstate();
-    strcpy(path, this.this_path);
+    char path[MAX_PATH] = {0};
+    qtun->lua = luaL_newstate();
+    strcpy(path, qtun->this_path);
     strcat(path, "scripts/qtun.lua");
-    if (luaL_dofile(this.lua, path) != 0)
+    if (luaL_dofile(qtun->lua, path) != 0)
     {
-        fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
-        lua_close(this.lua);
+        fprintf(stderr, "%s\n", lua_tostring(qtun->lua, -1));
+        lua_close(qtun->lua);
         exit(1);
     }
-    script_global_init(this.lua);
+    script_global_init(qtun->lua);
     return 1;
 }
 
 void show_logo()
 {
-    char path[MAX_PATH];
-    strcpy(path, this.this_path);
+    char path[MAX_PATH] = {0};
+    strcpy(path, qtun->this_path);
     strcat(path, "scripts/logo.lua");
-    if (luaL_dofile(this.lua, path) != 0)
-        fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
+    if (luaL_dofile(qtun->lua, path) != 0)
+        fprintf(stderr, "%s\n", lua_tostring(qtun->lua, -1));
 }
 
 void library_free()
 {
-    lua_close(this.lua);
+    lua_close(qtun->lua);
 }
 
 void conf_init(library_conf_t* conf)
@@ -202,7 +206,7 @@ int compare_clients_by_remote_ip_and_port(const void* d1, const size_t l1, const
 
 unsigned char netmask()
 {
-    return this.netmask;
+    return qtun->netmask;
 }
 
 void free_client(void* c, size_t l)

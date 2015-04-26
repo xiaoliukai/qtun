@@ -89,7 +89,7 @@ do {\
 } while (0)
 #else
 #define SYSLOG(level, arg...) do { \
-    if (this.log_level >= level) syslog(level, ##arg); \
+    if (qtun->log_level >= level) syslog(level, ##arg); \
 } while (0)
 #endif
 

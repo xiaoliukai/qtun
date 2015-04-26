@@ -29,25 +29,25 @@ unsigned short checksum(void* buffer, size_t len)
 
 uint32_t little32(uint32_t n)
 {
-    if (!this.little_endian) return bswap_32(n);
+    if (!qtun->little_endian) return bswap_32(n);
     return n;
 }
 
 uint16_t little16(uint16_t n)
 {
-    if (!this.little_endian) return bswap_16(n);
+    if (!qtun->little_endian) return bswap_16(n);
     return n;
 }
 
 uint32_t big32(uint32_t n)
 {
-    if (this.little_endian) return bswap_32(n);
+    if (qtun->little_endian) return bswap_32(n);
     return n;
 }
 
 uint16_t big16(uint16_t n)
 {
-    if (this.little_endian) return bswap_16(n);
+    if (qtun->little_endian) return bswap_16(n);
     return n;
 }
 

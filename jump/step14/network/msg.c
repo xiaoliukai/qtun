@@ -53,7 +53,7 @@ int gzip_compress(const void* src, const unsigned int src_len, void** dst, unsig
     unsigned char* ptr;
 
     dlen = compressBound(src_len) + sizeof(unsigned int);
-    ptr = pool_room_alloc(&this.pool, GZIP_ROOM_IDX, dlen);
+    ptr = pool_room_alloc(&qtun->pool, GZIP_ROOM_IDX, dlen);
     if (ptr == NULL) return 0;
     *dst = ptr;
     *(unsigned int*)ptr = htonl(src_len);
@@ -79,7 +79,7 @@ int gzip_decompress(const void* src, const unsigned int src_len, void** dst, uns
 
     *dst_len = ntohl(*(unsigned int*)src);
     src = (const unsigned char*)src + sizeof(unsigned int);
-    *dst = pool_room_alloc(&this.pool, GZIP_ROOM_IDX, *dst_len);
+    *dst = pool_room_alloc(&qtun->pool, GZIP_ROOM_IDX, *dst_len);
     if (*dst == NULL) return 0;
     stream.zalloc = NULL;
     stream.zfree  = NULL;
@@ -103,14 +103,14 @@ int aes_encrypt(const void* src, const unsigned int src_len, void** dst, unsigne
 
     *dst_len = src_len;
     if (left) *dst_len += AES_BLOCK_SIZE - (unsigned int)left;
-    ptr = pool_room_alloc(&this.pool, AES_ROOM_IDX, *dst_len + sizeof(unsigned int));
+    ptr = pool_room_alloc(&qtun->pool, AES_ROOM_IDX, *dst_len + sizeof(unsigned int));
     if (ptr == NULL) return 0;
     *dst = ptr;
     *(unsigned int*)ptr = htonl(src_len);
     ptr += sizeof(unsigned int);
 
-    memcpy(iv, this.aes_iv, sizeof(iv));
-    AES_set_encrypt_key(this.aes_key, this.aes_key_len, &key);
+    memcpy(iv, qtun->aes_iv, sizeof(iv));
+    AES_set_encrypt_key(qtun->aes_key, qtun->aes_key_len, &key);
     AES_cbc_encrypt(src, ptr, *dst_len, &key, iv, AES_ENCRYPT);
     *dst_len += sizeof(unsigned int);
 
@@ -124,11 +124,11 @@ int aes_decrypt(const void* src, const unsigned int src_len, void** dst, unsigne
     const unsigned char* ptr = (const unsigned char*)src + sizeof(unsigned int);
 
     *dst_len = ntohl(*(unsigned int*)src);
-    *dst = pool_room_alloc(&this.pool, AES_ROOM_IDX, src_len - sizeof(unsigned int));
+    *dst = pool_room_alloc(&qtun->pool, AES_ROOM_IDX, src_len - sizeof(unsigned int));
     if (*dst == NULL) return 0;
 
-    memcpy(iv, this.aes_iv, sizeof(iv));
-    AES_set_decrypt_key(this.aes_key, this.aes_key_len, &key);
+    memcpy(iv, qtun->aes_iv, sizeof(iv));
+    AES_set_decrypt_key(qtun->aes_key, qtun->aes_key_len, &key);
     AES_cbc_encrypt(ptr, *dst, src_len - sizeof(unsigned int), &key, iv, AES_DECRYPT);
 
     return 1;
@@ -143,28 +143,28 @@ int des_encrypt(const void* src, const unsigned int src_len, void** dst, unsigne
 
     *dst_len = src_len;
     if (left) *dst_len += DES_KEY_SZ - (unsigned int)left;
-    ptr = pool_room_alloc(&this.pool, DES_ROOM_IDX, *dst_len + sizeof(unsigned int));
+    ptr = pool_room_alloc(&qtun->pool, DES_ROOM_IDX, *dst_len + sizeof(unsigned int));
     if (ptr == NULL) return 0;
     *dst = ptr;
     *(unsigned int*)ptr = htonl(src_len);
     ptr += sizeof(unsigned int);
 
-    memcpy(iv, this.des_iv, sizeof(iv));
-    switch (this.des_key_len)
+    memcpy(iv, qtun->des_iv, sizeof(iv));
+    switch (qtun->des_key_len)
     {
     case DES_KEY_SZ:
-        DES_set_key((C_Block*)this.des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
         DES_cbc_encrypt(src, ptr, *dst_len, &k1, &iv, DES_ENCRYPT);
         break;
     case DES_KEY_SZ * 2:
-        DES_set_key((C_Block*)this.des_key[0], &k1);
-        DES_set_key((C_Block*)this.des_key[1], &k2);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[1], &k2);
         DES_ede2_cbc_encrypt(src, ptr, *dst_len, &k1, &k2, &iv, DES_ENCRYPT);
         break;
     default: // DES_KEY_SZ * 3
-        DES_set_key((C_Block*)this.des_key[0], &k1);
-        DES_set_key((C_Block*)this.des_key[1], &k2);
-        DES_set_key((C_Block*)this.des_key[2], &k3);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[1], &k2);
+        DES_set_key((C_Block*)qtun->des_key[2], &k3);
         DES_ede3_cbc_encrypt(src, ptr, *dst_len, &k1, &k2, &k3, &iv, DES_ENCRYPT);
         break;
     }
@@ -180,25 +180,25 @@ int des_decrypt(const void* src, const unsigned int src_len, void** dst, unsigne
     const unsigned char* ptr = (const unsigned char*)src + sizeof(unsigned int);
 
     *dst_len = ntohl(*(unsigned int*)src);
-    *dst = pool_room_alloc(&this.pool, DES_ROOM_IDX, src_len - sizeof(unsigned int));
+    *dst = pool_room_alloc(&qtun->pool, DES_ROOM_IDX, src_len - sizeof(unsigned int));
     if (*dst == NULL) return 0;
 
-    memcpy(iv, this.des_iv, sizeof(iv));
-    switch (this.des_key_len)
+    memcpy(iv, qtun->des_iv, sizeof(iv));
+    switch (qtun->des_key_len)
     {
     case DES_KEY_SZ:
-        DES_set_key((C_Block*)this.des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
         DES_cbc_encrypt(ptr, *dst, src_len - sizeof(unsigned int), &k1, &iv, DES_DECRYPT);
         break;
     case DES_KEY_SZ * 2:
-        DES_set_key((C_Block*)this.des_key[0], &k1);
-        DES_set_key((C_Block*)this.des_key[1], &k2);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[1], &k2);
         DES_ede2_cbc_encrypt(ptr, *dst, src_len - sizeof(unsigned int), &k1, &k2, &iv, DES_DECRYPT);
         break;
     default: // DES_KEY_SZ * 3
-        DES_set_key((C_Block*)this.des_key[0], &k1);
-        DES_set_key((C_Block*)this.des_key[1], &k2);
-        DES_set_key((C_Block*)this.des_key[2], &k3);
+        DES_set_key((C_Block*)qtun->des_key[0], &k1);
+        DES_set_key((C_Block*)qtun->des_key[1], &k2);
+        DES_set_key((C_Block*)qtun->des_key[2], &k3);
         DES_ede3_cbc_encrypt(ptr, *dst, src_len - sizeof(unsigned int), &k1, &k2, &k3, &iv, DES_DECRYPT);
         break;
     }
@@ -238,9 +238,9 @@ int append_msg_process_handler(
     rc = link_insert_tail(&msg_process_handlers, h, sizeof(*h));
     if (!rc) free(h);
     if (type == MSG_PROCESS_COMPRESS_HANDLER)
-        this.compress |= id;
+        qtun->compress |= id;
     else /* if (type == MSG_PROCESS_ENCRYPT_HANDLER) */
-        this.encrypt |= id;
+        qtun->encrypt |= id;
     return rc;
 }
 
@@ -275,7 +275,7 @@ int process_asc(void* src, unsigned int src_len, void** dst, unsigned int* dst_l
         {
             msg_process_handler_t* handler = (msg_process_handler_t*)iter.data;
             if (!handler->do_handler(src, src_len, dst, dst_len)) return 0;
-            if (free_src) pool_room_free(&this.pool, *room_id);
+            if (free_src) pool_room_free(&qtun->pool, *room_id);
             src = *dst;
             src_len = *dst_len;
             free_src = 1;
@@ -302,7 +302,7 @@ msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, 
     msg.ip = ip;
     msg.gateway = gateway;
     msg.mask = mask;
-    msg.internal_mtu = htons(this.internal_mtu);
+    msg.internal_mtu = htons(qtun->internal_mtu);
 
     if (!find_cmd(SYS_LOGIN, cmd_mask)) goto end;
     if (cmd_mask[request ? 0 : 1])
@@ -317,11 +317,11 @@ msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, 
 
     gettimeofday(&tv, NULL);
 
-    ret = pool_room_alloc(&this.pool, MSG_ROOM_IDX, sizeof(msg_t) + dst_len);
+    ret = pool_room_alloc(&qtun->pool, MSG_ROOM_IDX, sizeof(msg_t) + dst_len);
     ret->syscontrol  = 1;
-    ret->compress    = this.compress;
-    ret->encrypt     = this.encrypt;
-    ret->ident       = htonl(++this.msg_ident);
+    ret->compress    = qtun->compress;
+    ret->encrypt     = qtun->encrypt;
+    ret->ident       = htonl(++qtun->msg_ident);
     ret->sec         = htonl(tv.tv_sec);
     ret->usec        = little32(tv.tv_usec);
     ret->len         = little16((uint16_t)floor(dst_len / 16));
@@ -335,21 +335,21 @@ msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, 
     memcpy(ret->data, dst, dst_len);
     ret->checksum   = checksum(ret, sizeof(msg_t) + dst_len);
 end:
-    if (want_free) pool_room_free(&this.pool, room_id);
+    if (want_free) pool_room_free(&qtun->pool, room_id);
     return ret;
 }
 
 msg_t* new_keepalive_msg(unsigned char request)
 {
     struct timeval tv;
-    msg_t* ret = pool_room_alloc(&this.pool, MSG_ROOM_IDX, sizeof(msg_t));
+    msg_t* ret = pool_room_alloc(&qtun->pool, MSG_ROOM_IDX, sizeof(msg_t));
     if (ret == NULL) goto end;
     gettimeofday(&tv, NULL);
 
     ret->syscontrol  = 1;
     ret->compress    = 0;
     ret->encrypt     = 0;
-    ret->ident       = htonl(++this.msg_ident);
+    ret->ident       = htonl(++qtun->msg_ident);
     ret->sec         = htonl(tv.tv_sec);
     ret->usec        = little32(tv.tv_usec);
     ret->len         = 0;
@@ -374,7 +374,7 @@ int parse_msg(const msg_t* input, int* sys, void** output, unsigned short* outpu
     *sys = input->syscontrol;
     *output_len = src_len;
     *room_id = TMP_ROOM_IDX;
-    *output = pool_room_alloc(&this.pool, *room_id, src_len);
+    *output = pool_room_alloc(&qtun->pool, *room_id, src_len);
     if (*output == NULL) return 0;
     memcpy(*output, input->data, src_len);
     if (input->compress == 0 && input->encrypt == 0) return 1;
@@ -389,10 +389,10 @@ int parse_msg(const msg_t* input, int* sys, void** output, unsigned short* outpu
         {
             *output = NULL;
             *output_len = 0;
-            pool_room_free(&this.pool, *room_id);
+            pool_room_free(&qtun->pool, *room_id);
             return 0;
         }
-        pool_room_free(&this.pool, *room_id);
+        pool_room_free(&qtun->pool, *room_id);
         i = *output = o;
         src_len = *output_len = ol;
         *room_id = handler->room_id;
@@ -424,7 +424,7 @@ int parse_login_reply_msg(const msg_t* input, unsigned int* ip, unsigned int* ga
     *gateway = login->gateway;
     *mask = login->mask;
     *internal_mtu = login->internal_mtu;
-    pool_room_free(&this.pool, room_id);
+    pool_room_free(&qtun->pool, room_id);
     return 1;
 }
 

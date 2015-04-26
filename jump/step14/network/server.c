@@ -44,7 +44,7 @@ int bind_and_listen(unsigned short port)
     addr.sin_addr.s_addr = htons(INADDR_ANY);
     addr.sin_port = htons(port);
 
-    this.remotefd = fd = (int)socket(AF_INET, this.use_udp ? SOCK_DGRAM : SOCK_STREAM, 0);
+    qtun->remotefd = fd = (int)socket(AF_INET, qtun->use_udp ? SOCK_DGRAM : SOCK_STREAM, 0);
     if (fd == -1)
     {
         perror("socket");
@@ -67,7 +67,7 @@ int bind_and_listen(unsigned short port)
         return -1;
     }
 
-    if (this.use_udp) return fd;
+    if (qtun->use_udp) return fd;
 
     rc = listen(fd, SOMAXCONN);
     if (rc == -1)
@@ -90,7 +90,7 @@ static void accept_and_check()
 {
     struct sockaddr_in srcaddr;
     socklen_t addrlen = sizeof(srcaddr);
-    int fd = (int)accept(this.remotefd, (struct sockaddr*)&srcaddr, &addrlen);
+    int fd = (int)accept(qtun->remotefd, (struct sockaddr*)&srcaddr, &addrlen);
     client_t* client;
 #ifdef WIN32
     char flag = 1;
@@ -127,7 +127,7 @@ static void accept_and_check()
     client->keepalive = (unsigned int)time(NULL);
     client->status = CLIENT_STATUS_CHECKLOGIN | CLIENT_STATUS_WAITING_HEADER;
     client->want = sizeof(msg_t);
-    client->buffer = client->read = group_pool_room_alloc(&this.group_pool, client->want);
+    client->buffer = client->read = group_pool_room_alloc(&qtun->group_pool, client->want);
     client->buffer_len = client->want;
     if (client->buffer == NULL)
     {
@@ -139,12 +139,12 @@ static void accept_and_check()
     if (!hash_init(&client->recv_table, functor, 11))
     {
         SYSLOG(LOG_ERR, "hash_init failed");
-        group_pool_room_free(&this.group_pool, client->buffer);
+        group_pool_room_free(&qtun->group_pool, client->buffer);
         free(client);
         close(fd);
         return;
     }
-    if (!active_vector_append(&this.clients, client, sizeof(*client)))
+    if (!active_vector_append(&qtun->clients, client, sizeof(*client)))
     {
         SYSLOG(LOG_ERR, "append to clients error");
         free(client);
@@ -161,13 +161,13 @@ static void remove_clients(vector_t* v, const char* pfx)
         client_t* client;
         char ip[16];
         struct in_addr a;
-        active_vector_get(&this.clients, (size_t)tmp, (void**)&client, &tmp_len);
+        active_vector_get(&qtun->clients, (size_t)tmp, (void**)&client, &tmp_len);
         a.s_addr = client->remote_ip;
         sprintf(ip, "%s", inet_ntoa(a));
         SYSLOG(LOG_INFO, "%s: %s", pfx, ip);
         close(client->fd);
         hash_free(&client->recv_table);
-        active_vector_del(&this.clients, (size_t)tmp);
+        active_vector_del(&qtun->clients, (size_t)tmp);
     }
 }
 
@@ -187,7 +187,7 @@ static void server_process_sys(client_t* client, msg_t* msg)
             msg_t* new_msg = new_keepalive_msg(0);
             write_c(client, new_msg, sizeof(msg_t));
             SYSLOG(LOG_INFO, "reply keepalive message");
-            pool_room_free(&this.pool, MSG_ROOM_IDX);
+            pool_room_free(&qtun->pool, MSG_ROOM_IDX);
         }
         break;
     }
@@ -208,10 +208,10 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         close_client(for_del, idx);
         goto end;
     }
-    if (msg->compress != this.compress || msg->encrypt != this.encrypt) // 算法不同直接将本地的加密压缩算法返回
+    if (msg->compress != qtun->compress || msg->encrypt != qtun->encrypt) // 算法不同直接将本地的加密压缩算法返回
     {
-        msg->compress = this.compress;
-        msg->encrypt = this.encrypt;
+        msg->compress = qtun->compress;
+        msg->encrypt = qtun->encrypt;
         msg->checksum = 0;
         msg->checksum = checksum(msg, sizeof(msg_t) + msg_data_length(msg));
         write_c(client, msg, sizeof(msg_t) + msg_data_length(msg));
@@ -225,28 +225,28 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
     }
     login = (sys_login_msg_t*)data;
     if (memcmp(login->check, SYS_MSG_CHECK, sizeof(login->check)) ||
-        !check_ip_by_mask(login->ip, this.localip, this.netmask)) // 非法数据包
+        !check_ip_by_mask(login->ip, qtun->localip, qtun->netmask)) // 非法数据包
     {
         SYSLOG(LOG_ERR, "unknown sys_login_request message");
         close_client(for_del, idx);
         goto end;
     }
-    if (login->ip == this.localip || active_vector_exists(&this.clients, compare_clients_by_local_ip, (void*)(long)login->ip, sizeof(login->ip)) >= 0) // IP已被占用
+    if (login->ip == qtun->localip || active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)login->ip, sizeof(login->ip)) >= 0) // IP已被占用
     {
         unsigned short i;
-        unsigned int localip = login->ip & LEN2MASK(this.netmask);
-        for (i = 1; i < LEN2MASK(32 - this.netmask); ++i)
+        unsigned int localip = login->ip & LEN2MASK(qtun->netmask);
+        for (i = 1; i < LEN2MASK(32 - qtun->netmask); ++i)
         {
-            unsigned int newip = (i << this.netmask) | localip;
-            if (active_vector_exists(&this.clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != this.localip)
+            unsigned int newip = (i << qtun->netmask) | localip;
+            if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip)
             {
-                pool_room_free(&this.pool, room_id);
+                pool_room_free(&qtun->pool, room_id);
                 data = NULL;
-                new_msg = new_login_msg(newip, 0, this.netmask, 0);
+                new_msg = new_login_msg(newip, 0, qtun->netmask, 0);
                 if (new_msg)
                 {
                     write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
-                    pool_room_free(&this.pool, MSG_ROOM_IDX);
+                    pool_room_free(&qtun->pool, MSG_ROOM_IDX);
                 }
                 else
                 {
@@ -256,13 +256,13 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
                 goto end;
             }
         }
-        pool_room_free(&this.pool, room_id);
+        pool_room_free(&qtun->pool, room_id);
         data = NULL;
         new_msg = new_login_msg(0, 0, 0, 0);
         if (new_msg)
         {
             write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
-            pool_room_free(&this.pool, MSG_ROOM_IDX);
+            pool_room_free(&qtun->pool, MSG_ROOM_IDX);
         }
         else
         {
@@ -274,9 +274,9 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
     {
         unsigned int remote_ip = login->ip;
         unsigned short internal_mtu = ntohs(login->internal_mtu);
-        pool_room_free(&this.pool, room_id);
+        pool_room_free(&qtun->pool, room_id);
         data = NULL;
-        new_msg = new_login_msg(remote_ip, this.localip, this.netmask, 0);
+        new_msg = new_login_msg(remote_ip, qtun->localip, qtun->netmask, 0);
         if (new_msg == NULL)
         {
             SYSLOG(LOG_ERR, "Can not create login message");
@@ -286,13 +286,13 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         client->local_ip = remote_ip;
         client->keepalive = (unsigned int)time(NULL);
         client->internal_mtu = internal_mtu;
-        client->max_length = ROUND_UP(client->internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (this.use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
+        client->max_length = ROUND_UP(client->internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (qtun->use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
         client->status = CLIENT_STATUS_NORMAL;
-        if (this.use_udp && client->max_length + sizeof(msg_t) > this.recv_buffer_len)
+        if (qtun->use_udp && client->max_length + sizeof(msg_t) > qtun->recv_buffer_len)
         {
-            this.recv_buffer_len = client->max_length + sizeof(msg_t);
-            this.recv_buffer = pool_room_realloc(&this.pool, RECV_ROOM_IDX, this.recv_buffer_len);
-            if (this.recv_buffer == NULL)
+            qtun->recv_buffer_len = client->max_length + sizeof(msg_t);
+            qtun->recv_buffer = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->recv_buffer_len);
+            if (qtun->recv_buffer == NULL)
             {
                 SYSLOG(LOG_INFO, "Not enough memory");
                 close_client(for_del, idx);
@@ -311,10 +311,10 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         }
 #endif
         write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
-        pool_room_free(&this.pool, MSG_ROOM_IDX);
+        pool_room_free(&qtun->pool, MSG_ROOM_IDX);
     }
 end:
-    if (data) pool_room_free(&this.pool, room_id);
+    if (data) pool_room_free(&qtun->pool, room_id);
 }
 
 static void process_msg(client_t* client, msg_t* msg, vector_t* for_del, size_t idx)
@@ -332,30 +332,30 @@ static void process_msg(client_t* client, msg_t* msg, vector_t* for_del, size_t 
         else
         {
             server_process_sys(client, msg);
-            active_vector_up(&this.clients, idx);
+            active_vector_up(&qtun->clients, idx);
         }
     }
     else if (msg->zone.clip)
     {
-        if (!process_clip_msg(this.localfd, client, msg, &room_id)) goto end;
-        active_vector_up(&this.clients, idx);
+        if (!process_clip_msg(qtun->localfd, client, msg, &room_id)) goto end;
+        active_vector_up(&qtun->clients, idx);
     }
     else if (parse_msg(msg, &sys, &buffer, &len, &room_id))
     {
         ssize_t written;
 #ifdef WIN32
-        WriteFile(this.localfd, buffer, len, &written, NULL);
+        WriteFile(qtun->localfd, buffer, len, &written, NULL);
 #else
-        written = write(this.localfd, buffer, len);
+        written = write(qtun->localfd, buffer, len);
 #endif
         SYSLOG(LOG_INFO, "write local length: %ld", written);
-        active_vector_up(&this.clients, idx);
+        active_vector_up(&qtun->clients, idx);
     }
     else
         SYSLOG(LOG_WARNING, "Parse message error");
 end:
-    if (buffer) pool_room_free(&this.pool, room_id);
-    if (!this.use_udp)
+    if (buffer) pool_room_free(&qtun->pool, room_id);
+    if (!qtun->use_udp)
     {
         client->status = (client->status & ~CLIENT_STATUS_WAITING_BODY) | CLIENT_STATUS_WAITING_HEADER;
         client->want = sizeof(msg_t);
@@ -381,7 +381,7 @@ static void udp_process(vector_t* for_del)
     };
     pair_t pair;
 
-    rc = udp_read(this.remotefd, this.recv_buffer, this.recv_buffer_len, &srcaddr, &addrlen);
+    rc = udp_read(qtun->remotefd, qtun->recv_buffer, qtun->recv_buffer_len, &srcaddr, &addrlen);
     if (rc <= 0)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK) return;
@@ -390,16 +390,16 @@ static void udp_process(vector_t* for_del)
     }
     pair.key = (void*)(long)srcaddr.sin_addr.s_addr;
     pair.val = (void*)(long)srcaddr.sin_port;
-    idx = active_vector_exists(&this.clients, compare_clients_by_remote_ip_and_port, &pair, sizeof(pair));
+    idx = active_vector_exists(&qtun->clients, compare_clients_by_remote_ip_and_port, &pair, sizeof(pair));
     if (idx >= 0)
     {
         size_t len;
-        active_vector_get(&this.clients, idx, (void**)&client, &len);
-        process_msg(client, (msg_t*)this.recv_buffer, for_del, idx);
+        active_vector_get(&qtun->clients, idx, (void**)&client, &len);
+        process_msg(client, (msg_t*)qtun->recv_buffer, for_del, idx);
     }
     else
     {
-        msg_t* msg = (msg_t*)this.recv_buffer;
+        msg_t* msg = (msg_t*)qtun->recv_buffer;
         if (msg->syscontrol && CHECK_SYS_OP(msg->sys, SYS_LOGIN, 1)) // 除了sys login其他一律丢包
         {
             client = malloc(sizeof(*client));
@@ -419,12 +419,12 @@ static void udp_process(vector_t* for_del)
                 free(client);
                 return;
             }
-            if (!active_vector_append(&this.clients, client, sizeof(*client)))
+            if (!active_vector_append(&qtun->clients, client, sizeof(*client)))
             {
                 SYSLOG(LOG_ERR, "append to clients error");
                 free(client);
             }
-            process_msg(client, msg, for_del, active_vector_count(&this.clients));
+            process_msg(client, msg, for_del, active_vector_count(&qtun->clients));
         }
     }
     if (client) checkout_ttl(&client->recv_table);
@@ -432,7 +432,7 @@ static void udp_process(vector_t* for_del)
 
 static void tcp_process(fd_set* set, vector_t* for_del)
 {
-    active_vector_iterator_t iter = active_vector_begin(&this.clients);
+    active_vector_iterator_t iter = active_vector_begin(&qtun->clients);
     while (!active_vector_is_end(iter))
     {
         client_t* client = iter.data;
@@ -464,7 +464,7 @@ static void tcp_process(fd_set* set, vector_t* for_del)
                         }
                         else client->want = len;
                         client->buffer_len = sizeof(msg_t) + client->want;
-                        client->buffer = group_pool_room_realloc(&this.group_pool, client->buffer, sizeof(msg_t) + client->want);
+                        client->buffer = group_pool_room_realloc(&qtun->group_pool, client->buffer, sizeof(msg_t) + client->want);
                         if (client->buffer == NULL)
                         {
                             SYSLOG(LOG_ERR, "Not enough memory");
@@ -494,14 +494,14 @@ static void server_process(int max, fd_set* set)
         NULL
     };
 
-    if (!this.use_udp && FD_ISSET(this.remotefd, set)) accept_and_check();
+    if (!qtun->use_udp && FD_ISSET(qtun->remotefd, set)) accept_and_check();
     vector_init(&v, f);
-    if (this.use_udp)
+    if (qtun->use_udp)
     {
-        if (FD_ISSET(this.remotefd, set)) udp_process(&v);
+        if (FD_ISSET(qtun->remotefd, set)) udp_process(&v);
     }
     else tcp_process(set, &v);
-    ++this.msg_ttl;
+    ++qtun->msg_ttl;
     remove_clients(&v, "closed");
     vector_free(&v);
     if (LOCAL_HAVE_DATA(set))
@@ -510,20 +510,20 @@ static void server_process(int max, fd_set* set)
         ssize_t readen = 0;
 
 #ifdef WIN32
-        ReadFile(this.localfd, buffer, sizeof(buffer), &readen, NULL);
+        ReadFile(qtun->localfd, buffer, sizeof(buffer), &readen, NULL);
 #else
-        readen = read(this.localfd, buffer, sizeof(buffer));
+        readen = read(qtun->localfd, buffer, sizeof(buffer));
 #endif
         if (readen > 0)
         {
             ssize_t idx;
             ipHdr = (struct iphdr*)buffer;
-            idx = active_vector_lookup(&this.clients, compare_clients_by_local_ip, (void*)(long)ipHdr->daddr, sizeof(ipHdr->daddr));
+            idx = active_vector_lookup(&qtun->clients, compare_clients_by_local_ip, (void*)(long)ipHdr->daddr, sizeof(ipHdr->daddr));
             if (idx >= 0)
             {
                 client_t* client;
                 size_t len;
-                active_vector_get(&this.clients, idx, (void**)&client, &len);
+                active_vector_get(&qtun->clients, idx, (void**)&client, &len);
                 group = new_msg_group(buffer, (unsigned short)readen);
                 if (group)
                 {
@@ -546,8 +546,8 @@ void server_loop(fd_type remotefd, local_fd_type localfd)
         NULL
     };
 
-    this.remotefd = remotefd;
-    this.localfd = localfd;
+    qtun->remotefd = remotefd;
+    qtun->localfd = localfd;
 
     vector_init(&v, f);
     while (1)
@@ -563,9 +563,9 @@ void server_loop(fd_type remotefd, local_fd_type localfd)
         FD_SET(localfd, &set);
         max = remotefd > localfd ? remotefd : localfd;
 #endif
-        if (!this.use_udp)
+        if (!qtun->use_udp)
         {
-            iter = active_vector_begin(&this.clients);
+            iter = active_vector_begin(&qtun->clients);
             while (!active_vector_is_end(iter))
             {
                 int fd = ((client_t*)iter.data)->fd;
@@ -578,7 +578,7 @@ void server_loop(fd_type remotefd, local_fd_type localfd)
         max = select(max + 1, &set, NULL, NULL, &tv);
         server_process(max, &set);
 
-        iter = active_vector_begin(&this.clients);
+        iter = active_vector_begin(&qtun->clients);
         while (!active_vector_is_end(iter))
         {
             client_t* client = (client_t*)iter.data;

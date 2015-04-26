@@ -31,32 +31,32 @@
 
 ssize_t read_msg_t(client_t* client, msg_t** msg, double timeout)
 {
-    if (this.use_udp)
+    if (qtun->use_udp)
     {
-        *msg = pool_room_realloc(&this.pool, RECV_ROOM_IDX, this.recv_buffer_len);
-        return read_t(client, *msg, this.recv_buffer_len, timeout);
+        *msg = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->recv_buffer_len);
+        return read_t(client, *msg, qtun->recv_buffer_len, timeout);
     }
     else
     {
         ssize_t rc;
         size_t len;
 
-        *msg = pool_room_realloc(&this.pool, RECV_ROOM_IDX, sizeof(msg_t));
+        *msg = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, sizeof(msg_t));
         if (*msg == NULL) return -2;
         rc = read_t(client, *msg, sizeof(**msg), timeout);
         if (rc <= 0)
         {
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             *msg = NULL;
             return rc;
         }
         len = msg_data_length(*msg);
-        *msg = pool_room_realloc(&this.pool, RECV_ROOM_IDX, sizeof(msg_t) + len);
+        *msg = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, sizeof(msg_t) + len);
         if (*msg == NULL) return -2;
         rc = read_t(client, (*msg)->data, len, timeout);
         if (rc <= 0 && len)
         {
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             *msg = NULL;
             return rc;
         }
@@ -64,7 +64,7 @@ ssize_t read_msg_t(client_t* client, msg_t** msg, double timeout)
         if (checksum(*msg, sizeof(msg_t) + len))
         {
             SYSLOG(LOG_ERR, "Invalid msg");
-            pool_room_free(&this.pool, RECV_ROOM_IDX);
+            pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             *msg = NULL;
             return -2;
         }
@@ -114,7 +114,7 @@ local_fd_type tun_open(char name[IFNAMSIZ])
             return -1;
         }
         
-        this.localfd = fd;
+        qtun->localfd = fd;
         strncpy(name, ifr.ifr_name, IFNAMSIZ);
 #endif
         return fd;
@@ -124,9 +124,9 @@ local_fd_type tun_open(char name[IFNAMSIZ])
 
 ssize_t write_c(client_t* client, const void* buf, size_t count)
 {
-    if (this.use_udp)
+    if (qtun->use_udp)
     {
-        return sendto(this.remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr));
+        return sendto(qtun->remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr));
     }
     else
     {
@@ -169,7 +169,7 @@ ssize_t read_t(client_t* client, void* buf, size_t count, double timeout)
             errno = EAGAIN;
             return -1;
         default:
-            if (this.use_udp)
+            if (qtun->use_udp)
             {
                 socklen_t len = sizeof(client->addr);
                 return recvfrom(client->fd, buf, (int)count, 0, (struct sockaddr*)&client->addr, &len);
@@ -207,7 +207,7 @@ ssize_t send_msg_group(client_t* client, msg_group_t* g)
     if (g->count == 0) return -1;
 
     left = msg_data_length(g->elements[0]);
-    fixed = this.max_length;
+    fixed = qtun->max_length;
     for (i = 0; i < g->count - 1UL; ++i)
     {
         written = write_c(client, g->elements[i], sizeof(msg_t) + fixed);
@@ -257,26 +257,26 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     if (!msg->zone.clip) return 0;
     if (group == NULL)
     {
-        group = group_pool_room_alloc(&this.group_pool, sizeof(msg_group_t));
+        group = group_pool_room_alloc(&qtun->group_pool, sizeof(msg_group_t));
         if (group == NULL)
         {
             SYSLOG(LOG_ERR, "Not enough memory");
             return 0;
         }
         group->count = (unsigned short)ceil((double)all_len / client->max_length);
-        group->elements = group_pool_room_alloc(&this.group_pool, sizeof(msg_t*) * group->count);
+        group->elements = group_pool_room_alloc(&qtun->group_pool, sizeof(msg_t*) * group->count);
         memset(group->elements, 0, sizeof(msg_t*) * group->count);
         group->ident = ident;
-        group->ttl_start = this.msg_ttl;
+        group->ttl_start = qtun->msg_ttl;
         if (!hash_set(&client->recv_table, (void*)(unsigned long)ident, sizeof(ident), group, sizeof(msg_group_t))) return 0;
     }
-    if (this.msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
+    if (qtun->msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
     for (i = 0; i < group->count; ++i)
     {
         if (group->elements[i] == NULL) // 收包顺序可能与发包顺序不同
         {
             size_t this_len = sizeof(msg_t) + (msg->zone.last ? all_len % client->max_length : client->max_length);
-            msg_t* dup = group_pool_room_alloc(&this.group_pool, this_len);
+            msg_t* dup = group_pool_room_alloc(&qtun->group_pool, this_len);
             if (dup == NULL) break;
             memcpy(dup, msg, this_len);
             group->elements[i] = dup;
@@ -293,7 +293,7 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
                     written = write(fd, buffer, len);
 #endif
                     SYSLOG(LOG_INFO, "write local length: %ld", written);
-                    pool_room_free(&this.pool, *room_id);
+                    pool_room_free(&qtun->pool, *room_id);
                 }
                 else
                     SYSLOG(LOG_WARNING, "Parse message error");
@@ -327,7 +327,7 @@ int local_have_data()
 {
     unsigned char ret = 0;
     DWORD readen = 0;
-    DeviceIoControl(this.localfd, IOCTL_HAVE_DATA, NULL, 0, &ret, sizeof(ret), &readen, NULL);
+    DeviceIoControl(qtun->localfd, IOCTL_HAVE_DATA, NULL, 0, &ret, sizeof(ret), &readen, NULL);
     return ret;
 }
 #endif

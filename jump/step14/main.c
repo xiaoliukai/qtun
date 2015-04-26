@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
     openlog(argv[0], LOG_PERROR | LOG_CONS | LOG_PID, LOG_LOCAL0);
 #endif
 
-    memset(&this, 0, sizeof(this));
+    qtun = calloc(sizeof(*qtun), 1);
 
 #ifdef WIN32
     remotefd = -1;
@@ -152,10 +152,14 @@ int main(int argc, char* argv[])
         switch (opt)
         {
         case 'c':
-            if (realpath(optarg, conf.conf_file) == NULL)
             {
-                perror("realpath");
-                return 1;
+                char* path = realpath(optarg, NULL);
+                if (path == NULL) {
+                    perror("realpath");
+                    return 1;
+                }
+                strcpy(conf.conf_file, path);
+                free(path);
             }
             break;
         default:
@@ -211,7 +215,7 @@ int main(int argc, char* argv[])
     
     init_lua();
     show_logo();
-    script_load_config(this.lua, &conf, conf.conf_file);
+    script_load_config(qtun->lua, &conf, conf.conf_file);
     
     if (conf.localip == 0)
     {
@@ -231,10 +235,10 @@ int main(int argc, char* argv[])
     if (localfd == INVALID_HANDLE_VALUE) return 1;
     fprintf(stdout, "%s opened\n", conf.dev_name);
 #else
-    memset(this.dev_name, 0, IFNAMSIZ);
-    localfd = tun_open(this.dev_name);
+    memset(qtun->dev_name, 0, IFNAMSIZ);
+    localfd = tun_open(qtun->dev_name);
     if (localfd == -1) return 1;
-    syslog(LOG_INFO, "%s opened\n", this.dev_name);
+    syslog(LOG_INFO, "%s opened\n", qtun->dev_name);
 #endif
     a.s_addr = conf.localip;
 
@@ -269,7 +273,7 @@ int main(int argc, char* argv[])
         }
 #elif defined(__APPLE__)
         {
-            sprintf(cmd, "ifconfig %s %s/%u up", this.dev_name, inet_ntoa(a), conf.netmask);
+            sprintf(cmd, "ifconfig %s %s/%u up", qtun->dev_name, inet_ntoa(a), conf.netmask);
             SYSTEM_EXIT(cmd);
             a.s_addr = conf.localip & LEN2MASK(conf.netmask);
             sprintf(cmd, "route add -net %s/%u %s", inet_ntoa(a), conf.netmask, inet_ntoa(a));
@@ -277,10 +281,10 @@ int main(int argc, char* argv[])
         }
 #else
         {
-            sprintf(cmd, "ifconfig %s %s/%u up", this.dev_name, inet_ntoa(a), conf.netmask);
+            sprintf(cmd, "ifconfig %s %s/%u up", qtun->dev_name, inet_ntoa(a), conf.netmask);
             SYSTEM_EXIT(cmd);
             a.s_addr = conf.localip & LEN2MASK(conf.netmask);
-            sprintf(cmd, "route add -net %s/%u dev %s", inet_ntoa(a), conf.netmask, this.dev_name);
+            sprintf(cmd, "route add -net %s/%u dev %s", inet_ntoa(a), conf.netmask, qtun->dev_name);
             SYSTEM_EXIT(cmd);
         }
 #endif
@@ -313,11 +317,11 @@ int main(int argc, char* argv[])
 #elif defined(__APPLE__)
                 {
                     char ip1[16], ip2[16];
-                    a.s_addr = this.localip;
+                    a.s_addr = qtun->localip;
                     strcpy(ip1, inet_ntoa(a));
-                    a.s_addr = this.client.local_ip;
+                    a.s_addr = qtun->client.local_ip;
                     strcpy(ip2, inet_ntoa(a));
-                    sprintf(cmd, "ifconfig %s inet %s %s up", this.dev_name, ip1, ip2);
+                    sprintf(cmd, "ifconfig %s inet %s %s up", qtun->dev_name, ip1, ip2);
                     SYSTEM_EXIT(cmd);
                     mask = netmask();
                     a.s_addr = conf.localip & LEN2MASK(mask);
@@ -326,11 +330,11 @@ int main(int argc, char* argv[])
                 }
 #else
                 {
-                    sprintf(cmd, "ifconfig %s %s up", this.dev_name, inet_ntoa(a));
+                    sprintf(cmd, "ifconfig %s %s up", qtun->dev_name, inet_ntoa(a));
                     SYSTEM_EXIT(cmd);
                     mask = netmask();
                     a.s_addr = conf.localip & LEN2MASK(mask);
-                    sprintf(cmd, "route add -net %s/%u dev %s", inet_ntoa(a), mask, this.dev_name);
+                    sprintf(cmd, "route add -net %s/%u dev %s", inet_ntoa(a), mask, qtun->dev_name);
                     SYSTEM_EXIT(cmd);
                 }
 #endif
@@ -352,3 +356,4 @@ int main(int argc, char* argv[])
     library_free();
     return 0;
 }
+

@@ -52,7 +52,7 @@ typedef HANDLE local_fd_type;
 #else
 typedef int fd_type;
 typedef int local_fd_type;
-#define LOCAL_HAVE_DATA(set) (FD_ISSET(this.localfd, set))
+#define LOCAL_HAVE_DATA(set) (FD_ISSET(qtun->localfd, set))
 #define SLEEP(n) sleep(n)
 #endif
 
@@ -128,9 +128,9 @@ typedef struct
     client_t        client;
     unsigned int    keepalive;
     unsigned char   keepalive_replyed;
-} this_t;
+} qtun_t;
 
-extern this_t this;
+extern qtun_t* qtun;
 
 struct library_conf_s
 {

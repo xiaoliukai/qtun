@@ -26,62 +26,62 @@ static int state_get(lua_State* lua)
     const char* str = luaL_checklstring(lua, -1, &len);
 
     if (strcmp(str, "this_path") == 0)
-        lua_pushstring(lua, this.this_path);
+        lua_pushstring(lua, qtun->this_path);
     else if (strcmp(str, "msg_ident") == 0)
-        lua_pushinteger(lua, this.msg_ident);
+        lua_pushinteger(lua, qtun->msg_ident);
     else if (strcmp(str, "msg_ttl") == 0)
-        lua_pushinteger(lua, this.msg_ttl);
+        lua_pushinteger(lua, qtun->msg_ttl);
     else if (strcmp(str, "localip") == 0)
     {
-        struct in_addr a = {this.localip};
+        struct in_addr a = {qtun->localip};
         lua_pushstring(lua, inet_ntoa(a));
     }
     else if (strcmp(str, "netmask") == 0)
-        lua_pushinteger(lua, this.netmask);
+        lua_pushinteger(lua, qtun->netmask);
     else if (strcmp(str, "log_level") == 0)
-        lua_pushinteger(lua, this.log_level);
+        lua_pushinteger(lua, qtun->log_level);
     else if (strcmp(str, "little_endian") == 0)
-        lua_pushboolean(lua, this.little_endian);
+        lua_pushboolean(lua, qtun->little_endian);
     else if (strcmp(str, "internal_mtu") == 0)
-        lua_pushinteger(lua, this.internal_mtu);
+        lua_pushinteger(lua, qtun->internal_mtu);
     else if (strcmp(str, "use_udp") == 0)
-        lua_pushboolean(lua, this.use_udp);
+        lua_pushboolean(lua, qtun->use_udp);
     else if (strcmp(str, "aes_key") == 0)
     {
-        if (this.aes_key_len)
-            lua_pushlstring(lua, (const char*)this.aes_key, this.aes_key_len);
+        if (qtun->aes_key_len)
+            lua_pushlstring(lua, (const char*)qtun->aes_key, qtun->aes_key_len);
         else
             lua_pushnil(lua);
     }
     else if (strcmp(str, "aes_key_len") == 0)
-        lua_pushinteger(lua, this.aes_key_len);
+        lua_pushinteger(lua, qtun->aes_key_len);
     else if (strcmp(str, "aes_iv") == 0)
     {
-        if (this.aes_key_len)
-            lua_pushlstring(lua, (const char*)this.aes_iv, sizeof(this.aes_iv));
+        if (qtun->aes_key_len)
+            lua_pushlstring(lua, (const char*)qtun->aes_iv, sizeof(qtun->aes_iv));
         else
             lua_pushnil(lua);
     }
     else if (strcmp(str, "des_key") == 0)
     {
-        if (this.des_key_len)
-            lua_pushlstring(lua, (const char*)this.des_key, this.des_key_len);
+        if (qtun->des_key_len)
+            lua_pushlstring(lua, (const char*)qtun->des_key, qtun->des_key_len);
         else
             lua_pushnil(lua);
     }
     else if (strcmp(str, "des_key_len") == 0)
-        lua_pushinteger(lua, this.des_key_len);
+        lua_pushinteger(lua, qtun->des_key_len);
     else if (strcmp(str, "des_iv") == 0)
     {
-        if (this.des_key_len)
-            lua_pushlstring(lua, (const char*)this.des_iv, sizeof(this.des_iv));
+        if (qtun->des_key_len)
+            lua_pushlstring(lua, (const char*)qtun->des_iv, sizeof(qtun->des_iv));
         else
             lua_pushnil(lua);
     }
     else if (strcmp(str, "compress") == 0)
-        lua_pushinteger(lua, this.compress);
+        lua_pushinteger(lua, qtun->compress);
     else if (strcmp(str, "encrypt") == 0)
-        lua_pushinteger(lua, this.encrypt);
+        lua_pushinteger(lua, qtun->encrypt);
     else
         lua_pushnil(lua);
     return 1;
@@ -353,12 +353,12 @@ int script_load_config(lua_State* lua, library_conf_t* conf, const char* file_pa
     lua_pushlightuserdata(lua, conf);
     lua_setglobal(lua, "__conf__");
     
-    strcpy(path, this.this_path);
+    strcpy(path, qtun->this_path);
     strcat(path, "scripts/load_config.lua");
     if (luaL_dofile(lua, path) != 0)
     {
-        fprintf(stderr, "%s\n", lua_tostring(this.lua, -1));
-        lua_close(this.lua);
+        fprintf(stderr, "%s\n", lua_tostring(qtun->lua, -1));
+        lua_close(qtun->lua);
         exit(1);
     }
     return 1;
