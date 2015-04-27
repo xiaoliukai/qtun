@@ -305,6 +305,24 @@
 | **default** | nil                           |
 | **desc**    | Set DES encryption key file, when not using DES encryption, it will return nil. |
 
+### qtun.conf.use\_dhcp
+
+| key         | value                                    |
+| ----------- | ---------------------------------------- |
+| **type**    | boolean                                  |
+| **access**  | read and write                           |
+| **default** | false                                    |
+| **desc**    | Set server is using dhcp for connection. |
+
+### qtun.conf.signature
+
+| key         | value                         |
+| ----------- | ----------------------------- |
+| **type**    | string                        |
+| **access**  | read and write                |
+| **default** | /                             |
+| **desc**    | In client it is a 31 bytes string for verify the connection security. In server it is the path for signature file, there are many signature keys in signature file, each signature key is 31 bytes in each row. |
+
 ## qtun.log
 
 | key        | value                         |
