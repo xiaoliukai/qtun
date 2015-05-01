@@ -345,10 +345,15 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         goto end;
     }
     login = (sys_login_msg_t*)data;
-    if (memcmp(login->check, SYS_MSG_CHECK, sizeof(login->check)) ||
-        !check_ip_by_mask(login->ip, qtun->localip, qtun->netmask)) // 非法数据包
+    if (memcmp(login->check, SYS_MSG_CHECK, sizeof(login->check))) // 非法数据包
     {
         SYSLOG(LOG_ERR, "unknown sys_login_request message");
+        close_client(for_del, idx);
+        goto end;
+    }
+    if (!qtun->use_dhcp && !check_ip_by_mask(login->ip, qtun->localip, qtun->netmask)) // 使用静态地址但IP地址不在当前可用网段内
+    {
+        SYSLOG(LOG_ERR, "invalid localip range");
         close_client(for_del, idx);
         goto end;
     }
@@ -482,7 +487,7 @@ static void udp_process(vector_t* for_del)
                 SYSLOG(LOG_ERR, "append to clients error");
                 free(client);
             }
-            process_msg(client, msg, for_del, active_vector_count(&qtun->clients));
+            process_msg(client, msg, for_del, active_vector_count(&qtun->clients) - 1);
         }
     }
     if (client) checkout_ttl(&client->recv_table);
