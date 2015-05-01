@@ -120,7 +120,6 @@ int connect_server(char* host, unsigned short port)
                     pool_room_free(&qtun->pool, room_id);
                     goto end;
                 }
-                printf("%d\n", login->dhcp);
                 if (login->dhcp) {
                     qtun->localip = login->ip;
                 } else {
