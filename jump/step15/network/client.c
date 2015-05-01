@@ -83,7 +83,11 @@ int connect_server(char* host, unsigned short port)
         perror("setsockopt");
     }
 
-    msg = new_login_msg(qtun->localip, 0, 0, 1, 0, qtun->signature);
+    {
+        unsigned char signature[31] = {0};
+        script_load_signature(qtun->lua, signature);
+        msg = new_login_msg(qtun->localip, 0, 0, 1, 0, signature);
+    }
     if (msg)
     {
         write_c(&qtun->client, msg, sizeof(msg_t) + msg_data_length(msg));
@@ -117,6 +121,7 @@ int connect_server(char* host, unsigned short port)
             }
             if (login->ip != qtun->localip) {
                 if (!script_signature_verify(qtun->lua, login->signature)) {
+                    SYSLOG(LOG_ERR, "invalid signature");
                     pool_room_free(&qtun->pool, room_id);
                     goto end;
                 }

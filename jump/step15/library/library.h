@@ -90,6 +90,7 @@ typedef struct
     unsigned int    localip;
     unsigned char   netmask;
     unsigned char   log_level;
+    unsigned char   is_server;
 #ifdef WIN32
     char            dev_symbol[MAX_PATH];
     char            dev_name[255];

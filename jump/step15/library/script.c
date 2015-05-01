@@ -82,6 +82,8 @@ static int state_get(lua_State* lua)
         lua_pushinteger(lua, qtun->compress);
     else if (strcmp(str, "encrypt") == 0)
         lua_pushinteger(lua, qtun->encrypt);
+    else if (strcmp(str, "is_server") == 0)
+        lua_pushboolean(lua, qtun->is_server);
     else
         lua_pushnil(lua);
     return 1;
@@ -120,7 +122,7 @@ static int conf_get(lua_State* lua)
         lua_pushboolean(lua, conf->use_udp);
     else if (strcmp(str, "use_gzip") == 0)
         lua_pushboolean(lua, conf->use_gzip);
-    else if (strcmp(str, "aes_file"))
+    else if (strcmp(str, "aes_file") == 0)
     {
         if (conf->use_aes)
             lua_pushstring(lua, conf->aes_key_file);
@@ -135,6 +137,8 @@ static int conf_get(lua_State* lua)
             lua_pushnil(lua);
     } else if (strcmp(str, "use_dhcp") == 0) {
         lua_pushboolean(lua, conf->use_dhcp);
+    } else if (strcmp(str, "signature") == 0) {
+        lua_pushlstring(lua, (char*)conf->signature, sizeof(conf->signature));
     } else {
         lua_pushnil(lua);
     }
@@ -371,7 +375,7 @@ int script_load_config(lua_State* lua, library_conf_t* conf, const char* file_pa
     strcat(path, "scripts/load_config.lua");
     if (luaL_dofile(lua, path) != 0)
     {
-        fprintf(stderr, "%s\n", lua_tostring(qtun->lua, -1));
+        fprintf(stderr, "%s\n", lua_tostring(lua, -1));
         lua_close(qtun->lua);
         exit(1);
     }
@@ -379,6 +383,24 @@ int script_load_config(lua_State* lua, library_conf_t* conf, const char* file_pa
 }
 
 int script_signature_verify(lua_State* lua, const unsigned char signature[31]) {
+    lua_getglobal(lua, "signature_verify");
+    lua_pushlstring(lua, (char*)signature, 31);
+    if (lua_pcall(lua, 1, 1, 0) != 0) {
+        SYSLOG(LOG_ERR, "%s\n", lua_tostring(lua, -1));
+        return 0;
+    }
+    return lua_toboolean(lua, -1);
+}
+
+int script_load_signature(lua_State* lua, unsigned char signature[31]) {
+    const char* str;
+    lua_getglobal(lua, "signature_load");
+    if (lua_pcall(lua, 0, 1, 0) != 0) {
+        SYSLOG(LOG_ERR, "%s\n", lua_tostring(lua, -1));
+        return 0;
+    }
+    str = lua_tostring(lua, -1);
+    memcpy(signature, str, 31);
     return 1;
 }
 

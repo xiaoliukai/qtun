@@ -257,6 +257,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "localip is zero\n");
             return 1;
         }
+        qtun->is_server = 1;
         remotefd = bind_and_listen(conf.server_port);
         if (remotefd == -1)
         {
@@ -297,7 +298,7 @@ int main(int argc, char* argv[])
 #endif
         int inited = 0;
         library_init(conf);
-
+        qtun->is_server = 0;
         while (1)
         {
             remotefd = connect_server(conf.server, conf.server_port);
