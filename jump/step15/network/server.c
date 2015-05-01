@@ -204,6 +204,31 @@ static int server_process_login_dhcp(client_t* client, sys_login_msg_t* login, s
             pool_room_free(&qtun->pool, yest_room);
             new_msg = new_login_msg(newip, 0, qtun->netmask, 0, 1, login->signature);
             if (new_msg) {
+                client->local_ip = newip;
+                client->keepalive = (unsigned int)time(NULL);
+                client->internal_mtu = login->internal_mtu;
+                client->max_length = ROUND_UP(client->internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (qtun->use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
+                client->status = CLIENT_STATUS_NORMAL;
+                if (qtun->use_udp && client->max_length + sizeof(msg_t) > qtun->recv_buffer_len) {
+                    qtun->recv_buffer_len = client->max_length + sizeof(msg_t);
+                    qtun->recv_buffer = pool_room_realloc(&qtun->pool, RECV_ROOM_IDX, qtun->recv_buffer_len);
+                    if (qtun->recv_buffer == NULL) {
+                        SYSLOG(LOG_INFO, "Not enough memory");
+                        close_client(for_del, idx);
+                        return 0;
+                    }
+                }
+#ifdef WIN32 // 将对端内网IP添加到ARP表
+                {
+                    char cmd[1024];
+                    char str[16];
+                    struct in_addr a;
+                    a.s_addr = remote_ip;
+                    strcpy(str, inet_ntoa(a));
+                    sprintf(cmd, "arp -s %s ff-ff-ff-ff-ff-ff", str); // TODO: get mac from remote
+                    SYSTEM_NORMAL(cmd);
+                }
+#endif
                 write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
                 pool_room_free(&qtun->pool, MSG_ROOM_IDX);
                 return 1;
