@@ -202,7 +202,7 @@ static int server_process_login_dhcp(client_t* client, sys_login_msg_t* login, s
         if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip) {
             msg_t* new_msg;
             pool_room_free(&qtun->pool, yest_room);
-            new_msg = new_login_msg(newip, 0, qtun->netmask, 0, login->signature);
+            new_msg = new_login_msg(newip, 0, qtun->netmask, 0, 1, login->signature);
             if (new_msg) {
                 write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
                 pool_room_free(&qtun->pool, MSG_ROOM_IDX);
@@ -227,7 +227,7 @@ static int server_process_login_no_dhcp(client_t* client, sys_login_msg_t* login
             unsigned int newip = (i << qtun->netmask) | localip;
             if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip) {
                 pool_room_free(&qtun->pool, yest_room);
-                new_msg = new_login_msg(newip, 0, qtun->netmask, 0, login->signature);
+                new_msg = new_login_msg(newip, 0, qtun->netmask, 0, 0, login->signature);
                 if (new_msg) {
                     write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
                     pool_room_free(&qtun->pool, MSG_ROOM_IDX);
@@ -240,7 +240,7 @@ static int server_process_login_no_dhcp(client_t* client, sys_login_msg_t* login
             }
         }
         pool_room_free(&qtun->pool, yest_room);
-        new_msg = new_login_msg(0, 0, 0, 0, login->signature);
+        new_msg = new_login_msg(0, 0, 0, 0, 0, login->signature);
         if (new_msg) {
             write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
             pool_room_free(&qtun->pool, MSG_ROOM_IDX);
@@ -253,7 +253,7 @@ static int server_process_login_no_dhcp(client_t* client, sys_login_msg_t* login
         unsigned int remote_ip = login->ip;
         unsigned short internal_mtu = ntohs(login->internal_mtu);
         pool_room_free(&qtun->pool, yest_room);
-        new_msg = new_login_msg(remote_ip, qtun->localip, qtun->netmask, 0, login->signature);
+        new_msg = new_login_msg(remote_ip, qtun->localip, qtun->netmask, 0, 0, login->signature);
         if (new_msg == NULL) {
             SYSLOG(LOG_ERR, "Can not create login message");
             close_client(for_del, idx);
@@ -334,7 +334,7 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         SYSLOG(LOG_ERR, "unknown signature");
         pool_room_free(&qtun->pool, room_id);
         data = NULL;
-        new_msg = new_login_msg(0, 0, 0, 0, signature);
+        new_msg = new_login_msg(0, 0, 0, 0, 0, signature);
         if (new_msg) {
             write_c(client, new_msg, sizeof(msg_t) + msg_data_length(new_msg));
             pool_room_free(&qtun->pool, MSG_ROOM_IDX);

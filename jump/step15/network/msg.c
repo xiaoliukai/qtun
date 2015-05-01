@@ -287,7 +287,7 @@ int process_asc(void* src, unsigned int src_len, void** dst, unsigned int* dst_l
     return 1;
 }
 
-msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, unsigned char request, const unsigned char signature[31])
+msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, unsigned char request, unsigned char dhcp, const unsigned char signature[31])
 {
     struct timeval tv;
     msg_t* ret = NULL;
@@ -303,6 +303,7 @@ msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, 
     msg.gateway = gateway;
     msg.mask = mask;
     msg.internal_mtu = htons(qtun->internal_mtu);
+    msg.dhcp = dhcp;
     memcpy(msg.signature, signature, sizeof(msg.signature));
 
     if (!find_cmd(SYS_LOGIN, cmd_mask)) goto end;

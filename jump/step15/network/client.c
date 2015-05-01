@@ -83,7 +83,7 @@ int connect_server(char* host, unsigned short port)
         perror("setsockopt");
     }
 
-    msg = new_login_msg(qtun->localip, 0, 0, 1, qtun->signature);
+    msg = new_login_msg(qtun->localip, 0, 0, 1, 0, qtun->signature);
     if (msg)
     {
         write_c(&qtun->client, msg, sizeof(msg_t) + msg_data_length(msg));
@@ -120,6 +120,7 @@ int connect_server(char* host, unsigned short port)
                     pool_room_free(&qtun->pool, room_id);
                     goto end;
                 }
+                printf("%d\n", login->dhcp);
                 if (login->dhcp) {
                     qtun->localip = login->ip;
                 } else {
