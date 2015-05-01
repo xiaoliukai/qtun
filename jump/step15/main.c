@@ -216,12 +216,7 @@ int main(int argc, char* argv[])
     init_lua();
     show_logo();
     script_load_config(qtun->lua, &conf, conf.conf_file);
-    
-    if (conf.localip == 0)
-    {
-        fprintf(stderr, "localip is zero\n");
-        return 1;
-    }
+
 #ifdef WIN32
     if (strlen(conf.dev_symbol) == 0)
     {
@@ -257,6 +252,11 @@ int main(int argc, char* argv[])
             return 1;
         }
         library_init(conf);
+        if (conf.localip == 0)
+        {
+            fprintf(stderr, "localip is zero\n");
+            return 1;
+        }
         remotefd = bind_and_listen(conf.server_port);
         if (remotefd == -1)
         {
@@ -306,11 +306,16 @@ int main(int argc, char* argv[])
                 SLEEP(5);
                 continue;
             }
+            a.s_addr = qtun->localip;
+            if (conf.localip == 0)
+            {
+                fprintf(stderr, "localip is zero\n");
+                return 1;
+            }
             if (!inited)
             {
 #ifdef WIN32
                 {
-                    a.s_addr = qtun->localip;
                     sprintf(cmd, "netsh interface ip set address name=\"%s\" static %s %s", conf.dev_name, inet_ntoa(a), STR_LEN2MASK(conf.netmask));
                     SYSTEM_EXIT(cmd);
                 }
