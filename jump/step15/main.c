@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
                 continue;
             }
             a.s_addr = qtun->localip;
-            if (conf.localip == 0)
+            if (qtun->localip == 0)
             {
                 fprintf(stderr, "localip is zero\n");
                 return 1;

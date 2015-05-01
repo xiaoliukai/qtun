@@ -196,7 +196,7 @@ static void server_process_sys(client_t* client, msg_t* msg)
 
 static int server_process_login_dhcp(client_t* client, sys_login_msg_t* login, size_t yest_room, vector_t* for_del, size_t idx) {
     unsigned short i;
-    unsigned int localip = login->ip & LEN2MASK(qtun->netmask);
+    unsigned int localip = qtun->localip & LEN2MASK(qtun->netmask);
     for (i = 1; i < LEN2MASK(32 - qtun->netmask); ++i) {
         unsigned int newip = (i << qtun->netmask) | localip;
         if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip) {
