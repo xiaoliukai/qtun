@@ -181,6 +181,14 @@
 	#define MSG_ENCRYPT_AES_ID           1
 	#define MSG_ENCRYPT_DES_ID           2
 
+### qtun.state.is\_server
+
+| key        | value                           |
+| ---------- | ------------------------------- |
+| **type**   | boolean                         |
+| **access** | readonly                        |
+| **desc**   | flag for indicate is server.    |
+
 ## qtun.conf
 
 | key        | value                                           |
