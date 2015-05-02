@@ -29,6 +29,8 @@
 
 #include "../struct/vector.h"
 
+#include "../version.h"
+
 #include "network.h"
 
 int bind_and_listen(unsigned short port)
@@ -345,9 +347,9 @@ static void server_process_login(client_t* client, msg_t* msg, size_t idx, vecto
         goto end;
     }
     login = (sys_login_msg_t*)data;
-    if (memcmp(login->check, SYS_MSG_CHECK, sizeof(login->check))) // 非法数据包
+    if (!CHECK_VERSION(login->major_version, login->minor_version, login->revision_version)) // 版本不一致
     {
-        SYSLOG(LOG_ERR, "unknown sys_login_request message");
+        SYSLOG(LOG_ERR, "Invalid version");
         close_client(for_del, idx);
         goto end;
     }

@@ -24,8 +24,6 @@
 #define IS_SYS_REQUEST(src) (src & 1)
 #define IS_SYS_REPLY(src) ((src & 1) == 0)
 
-#define SYS_MSG_CHECK "for sys msg check"
-
 #pragma pack(1)
 typedef struct
 {
@@ -51,7 +49,9 @@ typedef struct
 
 typedef struct
 {
-    unsigned char  check[3];
+    unsigned short major_version;
+    unsigned char  minor_version : 4;
+    unsigned char  revision_version : 4;
     unsigned int   ip;
     unsigned int   gateway;
     unsigned char  mask;

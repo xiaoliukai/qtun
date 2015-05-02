@@ -17,6 +17,8 @@
 
 #include "../struct/pool.h"
 
+#include "../version.h"
+
 #include "msg.h"
 
 link_t msg_process_handlers;
@@ -298,7 +300,9 @@ msg_t* new_login_msg(unsigned int ip, unsigned int gateway, unsigned char mask, 
     size_t room_id;
     unsigned char cmd_mask[2];
 
-    memcpy(msg.check, SYS_MSG_CHECK, sizeof(msg.check));
+    msg.major_version = QTUN_MAJOR_VERSION;
+    msg.minor_version = QTUN_MINOR_VERSION;
+    msg.revision_version = QTUN_REVISION_VERSION;
     msg.ip = ip;
     msg.gateway = gateway;
     msg.mask = mask;
@@ -415,9 +419,15 @@ int parse_login_reply_msg(const msg_t* input, sys_login_msg_t** login, size_t* r
         return 0;
     }
     *login = (sys_login_msg_t*)data;
-    if (!sys || !CHECK_SYS_OP(input->sys, SYS_LOGIN, 0) || memcmp((*login)->check, SYS_MSG_CHECK, sizeof((*login)->check)))
+    if (!sys || !CHECK_SYS_OP(input->sys, SYS_LOGIN, 0))
     {
         SYSLOG(LOG_ERR, "Invalid sys_login_reply message");
+        *login = NULL;
+        pool_room_free(&qtun->pool, *room_id);
+        return 0;
+    }
+    if (!CHECK_VERSION((*login)->major_version, (*login)->minor_version, (*login)->revision_version)) {
+        SYSLOG(LOG_ERR, "Invalid version");
         *login = NULL;
         pool_room_free(&qtun->pool, *room_id);
         return 0;
