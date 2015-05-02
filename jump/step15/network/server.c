@@ -204,7 +204,7 @@ static int server_process_login_dhcp(client_t* client, sys_login_msg_t* login, s
         if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip) {
             msg_t* new_msg;
             pool_room_free(&qtun->pool, yest_room);
-            new_msg = new_login_msg(newip, 0, qtun->netmask, 0, 1, login->signature);
+            new_msg = new_login_msg(newip, qtun->localip, qtun->netmask, 0, 1, login->signature);
             if (new_msg) {
                 client->local_ip = newip;
                 client->keepalive = (unsigned int)time(NULL);
