@@ -37,7 +37,7 @@ function signature_verify(signature)
         assert(file)
         while true do
             local line = file:read()
-            if line = nil then break end
+            if line == nil then break end
             if line == signature then return true end
         end
         file:close()
