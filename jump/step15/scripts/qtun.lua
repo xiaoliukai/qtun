@@ -19,7 +19,7 @@ function is_string(s)
 end
 
 function signature_load()
-    local file = io.open(qtun.conf.signature)
+    local file = io.open(qtun.conf.signature_file)
     local ret = ''
     assert(file)
     if qtun.state.is_server then
@@ -33,7 +33,7 @@ end
 
 function signature_verify(signature)
     if qtun.state.is_server then
-        local file = io.open(qtun.conf.signature)
+        local file = io.open(qtun.conf.signature_file)
         assert(file)
         while true do
             local line = file:read()
@@ -43,7 +43,7 @@ function signature_verify(signature)
         file:close()
         return false
     else
-        return signature == signature_load(qtun.conf.signature)
+        return signature == signature_load()
     end
 end
 
