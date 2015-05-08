@@ -257,6 +257,10 @@ int main(int argc, char* argv[])
             fprintf(stderr, "localip is zero\n");
             return 1;
         }
+        if (strlen(conf.signature_file) == 0) {
+            fprintf(stderr, "missing signature file\n");
+            return 1;
+        }
         qtun->is_server = 1;
         remotefd = bind_and_listen(conf.server_port);
         if (remotefd == -1)
@@ -311,6 +315,10 @@ int main(int argc, char* argv[])
             if (qtun->localip == 0)
             {
                 fprintf(stderr, "localip is zero\n");
+                return 1;
+            }
+            if (strlen(conf.signature_file) == 0) {
+                fprintf(stderr, "missing signature file\n");
                 return 1;
             }
             if (!inited)

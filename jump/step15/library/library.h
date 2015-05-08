@@ -149,7 +149,7 @@ struct library_conf_s
     char           dev_symbol[MAX_PATH];
     char           dev_name[255];
 #endif
-    unsigned char  signature[MAX_PATH];
+    char           signature_file[MAX_PATH];
     unsigned char  use_dhcp;
     unsigned char  use_udp;
 

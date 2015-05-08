@@ -176,7 +176,7 @@ void conf_init(library_conf_t* conf)
     memset(conf->dev_symbol, 0, sizeof(conf.dev_symbol));
     memset(conf->dev_name, 0, sizeof(conf.dev_name));
 #endif
-    memset(conf->signature, 0, sizeof(conf->signature));
+    memset(conf->signature_file, 0, sizeof(conf->signature_file));
     conf->use_dhcp     = 0;
     conf->use_gzip     = 0;
     conf->use_udp      = 0;

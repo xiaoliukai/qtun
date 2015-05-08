@@ -137,8 +137,8 @@ static int conf_get(lua_State* lua)
             lua_pushnil(lua);
     } else if (strcmp(str, "use_dhcp") == 0) {
         lua_pushboolean(lua, conf->use_dhcp);
-    } else if (strcmp(str, "signature") == 0) {
-        lua_pushlstring(lua, (char*)conf->signature, sizeof(conf->signature));
+    } else if (strcmp(str, "signature_file") == 0) {
+        lua_pushlstring(lua, (char*)conf->signature_file, sizeof(conf->signature_file));
     } else {
         lua_pushnil(lua);
     }
@@ -226,14 +226,14 @@ static int conf_set_and_check(lua_State* lua, library_conf_t* conf, const char* 
         rc = input_type == LUA_TBOOLEAN;
         if (!rc) goto end;
         conf->use_dhcp = lua_toboolean(lua, 3);
-    } else if (strcmp(key, "signature") == 0) {
+    } else if (strcmp(key, "signature_file") == 0) {
         size_t len;
         const char* str;
         rc = input_type == LUA_TSTRING;
         if (!rc) goto end;
         str = lua_tolstring(lua, 3, &len);
         if (len)
-            strncpy((char*)conf->signature, str, sizeof(conf->signature));
+            strncpy((char*)conf->signature_file, str, sizeof(conf->signature_file));
     }
 end:
     return rc;

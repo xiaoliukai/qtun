@@ -322,14 +322,14 @@
 | **default** | false                                    |
 | **desc**    | Set server is using dhcp for connection. |
 
-### qtun.conf.signature
+### qtun.conf.signature_file
 
 | key         | value                         |
 | ----------- | ----------------------------- |
 | **type**    | string                        |
 | **access**  | read and write                |
 | **default** | /                             |
-| **desc**    | In client it is a 31 bytes string for verify the connection security. In server it is the path for signature file, there are many signature keys in signature file, each signature key is 31 bytes in each row. |
+| **desc**    | Signature file path. In client it is a 31 bytes string in file. In server there are many signature keys in file, each signature key is 31 bytes in each row. |
 
 ## qtun.log
 
