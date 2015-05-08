@@ -104,7 +104,6 @@ typedef struct
     unsigned short  max_length;
     unsigned char   use_udp;
     unsigned char   use_dhcp;
-    unsigned char   signature[MAX_PATH];
 
     unsigned char   aes_key[32];
     unsigned int    aes_key_len;
