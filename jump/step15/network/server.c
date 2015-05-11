@@ -527,7 +527,7 @@ static void tcp_process(fd_set* set, vector_t* for_del)
                         client->status = (client->status & ~CLIENT_STATUS_WAITING_HEADER) | CLIENT_STATUS_WAITING_BODY;
                         if (msg->zone.clip)
                         {
-                            if (msg->zone.last) client->want = len % client->max_length;
+                            if (msg->zone.last && (len % client->max_length)) client->want = len % client->max_length;
                             else client->want = client->max_length;
                         }
                         else client->want = len;

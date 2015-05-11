@@ -290,7 +290,7 @@ static int client_process(int max, fd_set* set)
                         qtun->client.status = (qtun->client.status & ~CLIENT_STATUS_WAITING_HEADER) | CLIENT_STATUS_WAITING_BODY;
                         if (msg->zone.clip)
                         {
-                            if (msg->zone.last) qtun->client.want = len % qtun->client.max_length;
+                            if (msg->zone.last && (len % qtun->client.max_length)) qtun->client.want = len % qtun->client.max_length;
                             else qtun->client.want = qtun->client.max_length;
                         }
                         else qtun->client.want = len;
