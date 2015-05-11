@@ -203,12 +203,15 @@ static int server_process_login_dhcp(client_t* client, sys_login_msg_t* login, s
         unsigned int newip = (i << qtun->netmask) | localip;
         if (active_vector_exists(&qtun->clients, compare_clients_by_local_ip, (void*)(long)newip, sizeof(newip)) == -1 && newip != qtun->localip) {
             msg_t* new_msg;
+            unsigned char signature[31] = {0};
+            unsigned short internal_mtu = ntohs(login->internal_mtu);
+            memcpy(signature, login->signature, sizeof(signature));
             pool_room_free(&qtun->pool, yest_room);
-            new_msg = new_login_msg(newip, qtun->localip, qtun->netmask, 0, 1, login->signature);
+            new_msg = new_login_msg(newip, qtun->localip, qtun->netmask, 0, 1, signature);
             if (new_msg) {
                 client->local_ip = newip;
                 client->keepalive = (unsigned int)time(NULL);
-                client->internal_mtu = login->internal_mtu;
+                client->internal_mtu = internal_mtu;
                 client->max_length = ROUND_UP(client->internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (qtun->use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
                 client->status = CLIENT_STATUS_NORMAL;
                 if (qtun->use_udp && client->max_length + sizeof(msg_t) > qtun->recv_buffer_len) {
