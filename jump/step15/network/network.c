@@ -84,7 +84,7 @@ local_fd_type tun_open(char name[IFNAMSIZ])
 {
     int fd;
 
-    if ((fd = open("/dev/net/tun", O_RDWR)) == -1)
+    if ((fd = open("/dev/net/tun", O_RDWR)) == -1 && (fd = open("/dev/tun", O_RDWR)) == -1)
     {
         char str[128] = {0};
         int i;
