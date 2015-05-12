@@ -275,8 +275,13 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     {
         if (group->elements[i] == NULL) // 收包顺序可能与发包顺序不同
         {
-            size_t this_len = sizeof(msg_t) + (msg->zone.last ? all_len % client->max_length : client->max_length);
-            msg_t* dup = group_pool_room_alloc(&qtun->group_pool, this_len);
+            size_t this_len = sizeof(msg_t);
+            msg_t* dup;
+            if (msg->zone.last && (all_len % client->max_length))
+                this_len += all_len % client->max_length;
+            else
+                this_len += client->max_length;
+            dup = group_pool_room_alloc(&qtun->group_pool, this_len);
             if (dup == NULL) break;
             memcpy(dup, msg, this_len);
             group->elements[i] = dup;
@@ -310,8 +315,10 @@ int check_msg(client_t* client, msg_t* msg)
     size_t msg_data_len;
     if (msg->zone.clip)
     {
-        if (msg->zone.last) msg_data_len = msg_data_length(msg) % client->max_length;
-        else msg_data_len = client->max_length;
+        if (msg->zone.last && (msg_data_length(msg) % client->max_length))
+            msg_data_len = msg_data_length(msg) % client->max_length;
+        else
+            msg_data_len = client->max_length;
     }
     else msg_data_len = msg_data_length(msg);
     if (checksum(msg, sizeof(msg_t) + msg_data_len))
