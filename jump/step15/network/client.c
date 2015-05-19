@@ -119,12 +119,12 @@ int connect_server(char* host, unsigned short port)
                 pool_room_free(&qtun->pool, room_id);
                 goto end;
             }
+            if (!script_signature_verify(qtun->lua, login->signature)) {
+                SYSLOG(LOG_ERR, "invalid signature");
+                pool_room_free(&qtun->pool, room_id);
+                goto end;
+            }
             if (login->ip != qtun->localip) {
-                if (!script_signature_verify(qtun->lua, login->signature)) {
-                    SYSLOG(LOG_ERR, "invalid signature");
-                    pool_room_free(&qtun->pool, room_id);
-                    goto end;
-                }
                 if (login->dhcp) {
                     qtun->localip = login->ip;
                 } else {
