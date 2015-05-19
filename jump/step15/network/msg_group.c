@@ -172,13 +172,10 @@ int parse_msg_group(unsigned short max_length, msg_group_t* g, void** output, un
     if (*output == NULL) return 0;
     for (j = 0; j < g->count; ++j)
     {
-        if (!g->elements[j]->zone.last)
-        {
-            memcpy((char*)*output + (g->elements[j]->zone.idx << 3), g->elements[j]->data, fixed);
-        }
-        else
-        {
+        if (g->elements[j]->zone.last && src_len % fixed) {
             memcpy((char*)*output + (g->elements[j]->zone.idx << 3), g->elements[j]->data, src_len % fixed);
+        } else {
+            memcpy((char*)*output + (g->elements[j]->zone.idx << 3), g->elements[j]->data, fixed);
         }
     }
     if (qtun->compress == 0 && qtun->encrypt == 0) return 1;
