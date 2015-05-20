@@ -27,6 +27,7 @@
 #include "../library/library.h"
 #include "../library/proto.h"
 #include "../library/script.h"
+#include "../version.h"
 
 #include "network.h"
 
@@ -113,6 +114,15 @@ int connect_server(char* host, unsigned short port)
             }
             if (!parse_login_reply_msg(msg, &login, &room_id)) goto end;
             pool_room_free(&qtun->pool, RECV_ROOM_IDX);
+            if (login->major_version != QTUN_MAJOR_VERSION ||
+                login->minor_version != QTUN_MINOR_VERSION ||
+                login->revision_version != QTUN_REVISION_VERSION) {
+                SYSLOG(LOG_ERR, "Invalid Version: Server [%d.%d.%d] Client [%d.%d.%d]",
+                       login->major_version, login->minor_version, login->revision_version,
+                       QTUN_MAJOR_VERSION, QTUN_MINOR_VERSION, QTUN_REVISION_VERSION);
+                pool_room_free(&qtun->pool, room_id);
+                goto end;
+            }
             if (login->ip == 0)
             {
                 SYSLOG(LOG_ERR, "Not enough ip address");
