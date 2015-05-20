@@ -1,6 +1,10 @@
 [![Gitter chat](https://badges.gitter.im/takezoe/gitbucket.png)](https://gitter.im/lwch/qtun)
 [![Build Status](https://travis-ci.org/lwch/qtun.svg?branch=master)](https://travis-ci.org/lwch/qtun)
 
+# OpenWrt版本
+
+[github](https://github.com/lwch/qtun_openwrt)或[coding.net](https://coding.net/u/lwch/p/qtun_openwrt/git)
+
 # 网络模型与协议
 
 1. [OSI模型](http://blog.q-devel.com/osi%e6%a8%a1%e5%9e%8b/)
@@ -25,6 +29,7 @@
 12. [Jump The Great Firewall【step12 支持UDP协议】](http://blog.q-devel.com/jump-the-great-firewall-step12/)
 13. [Jump The Great Firewall【step13 支持Windows】](http://blog.q-devel.com/jump-the-great-firewall-step13/)
 14. [Jump The Great Firewall【step14 嵌入lua】](http://blog.q-devel.com/jump-the-great-firewall-step14/)
+15. [Jump The Great Firewall【step15 支持DHCP】](http://blog.q-devel.com/jump-the-great-firewall-step15/)
 
 # 部署
 
