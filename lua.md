@@ -112,7 +112,7 @@
 | **access** | readonly                                         |
 | **desc**   | Return true when they are using udp for connect. |
 
-### qtun.conf.use\_dhcp
+### qtun.state.use\_dhcp
 
 | key         | value                                                         |
 | ----------- | ------------------------------------------------------------- |
@@ -120,6 +120,15 @@
 | **access**  | readonly                                                      |
 | **default** | false                                                         |
 | **desc**    | Get server is using dhcp for connection, only used in server. |
+
+### qtun.state.multi\_pipe
+
+| key         | value                                     |
+| ----------- | ----------------------------------------- |
+| **type**    | number                                    |
+| **access**  | readonly                                  |
+| **default** | 1                                         |
+| **desc**    | Multi send count, the default count is 1. |
 
 ### qtun.state.aes\_key
 
@@ -331,7 +340,7 @@
 | **default** | false                                                         |
 | **desc**    | Set server is using dhcp for connection, only used in server. |
 
-### qtun.conf.signature_file
+### qtun.conf.signature\_file
 
 | key         | value                         |
 | ----------- | ----------------------------- |
@@ -339,6 +348,15 @@
 | **access**  | read and write                |
 | **default** | /                             |
 | **desc**    | Signature file path. In client it is a 31 bytes string in file. In server there are many signature keys in file, each signature key is 31 bytes in each row. |
+
+### qtun.conf.multi\_pipe
+
+| key         | value                                     |
+| ----------- | ----------------------------------------- |
+| **type**    | number                                    |
+| **access**  | read and write                            |
+| **default** | 1                                         |
+| **desc**    | Multi send count, the default count is 1. |
 
 ## qtun.log
 
