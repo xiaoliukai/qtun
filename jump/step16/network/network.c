@@ -274,7 +274,7 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     if (qtun->msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
     for (i = 0; i < group->count; ++i)
     {
-        if (group->elements[i]->zone.idx == msg->zone.idx) // 已收到过
+        if (group->elements[i] && group->elements[i]->zone.idx == msg->zone.idx) // 已收到过
             break;
         if (group->elements[i] == NULL) // 收包顺序可能与发包顺序不同
         {
