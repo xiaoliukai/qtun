@@ -37,6 +37,7 @@ int library_init(library_conf_t conf)
     qtun->max_length   = ROUND_UP(conf.internal_mtu - sizeof(msg_t) - sizeof(struct iphdr) - (conf.use_udp ? sizeof(struct udphdr) : sizeof(struct tcphdr)), 8);
     qtun->use_dhcp     = conf.use_dhcp;
     qtun->use_udp      = conf.use_udp;
+    qtun->multi_pipe   = conf.multi_pipe;
     qtun->compress     = 0;
     qtun->encrypt      = 0;
     qtun->netmask      = conf.netmask;
