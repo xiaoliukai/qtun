@@ -124,9 +124,11 @@ local_fd_type tun_open(char name[IFNAMSIZ])
 
 ssize_t write_c(client_t* client, const void* buf, size_t count) {
     unsigned char i;
+    unsigned char successed = 0;
     for (i = 0; i < qtun->multi_pipe; ++i) {
         if (qtun->use_udp) {
-            return sendto(qtun->remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr));
+            if (sendto(qtun->remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr)) >= 0)
+                ++successed;
         } else {
             const char* ptr = buf;
             size_t left = count;
@@ -141,9 +143,10 @@ ssize_t write_c(client_t* client, const void* buf, size_t count) {
                 ptr  += written;
                 left -= written;
             }
-            return (ssize_t)count;
+            ++successed;
         }
     }
+    return count;
 }
 
 ssize_t read_t(client_t* client, void* buf, size_t count, double timeout)
