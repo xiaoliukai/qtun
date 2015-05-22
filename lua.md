@@ -112,6 +112,15 @@
 | **access** | readonly                                         |
 | **desc**   | Return true when they are using udp for connect. |
 
+### qtun.conf.use\_dhcp
+
+| key         | value                                                         |
+| ----------- | ------------------------------------------------------------- |
+| **type**    | boolean                                                       |
+| **access**  | readonly                                                      |
+| **default** | false                                                         |
+| **desc**    | Get server is using dhcp for connection, only used in server. |
+
 ### qtun.state.aes\_key
 
 | key        | value                         |
@@ -315,12 +324,12 @@
 
 ### qtun.conf.use\_dhcp
 
-| key         | value                                    |
-| ----------- | ---------------------------------------- |
-| **type**    | boolean                                  |
-| **access**  | read and write                           |
-| **default** | false                                    |
-| **desc**    | Set server is using dhcp for connection. |
+| key         | value                                                         |
+| ----------- | ------------------------------------------------------------- |
+| **type**    | boolean                                                       |
+| **access**  | read and write                                                |
+| **default** | false                                                         |
+| **desc**    | Set server is using dhcp for connection, only used in server. |
 
 ### qtun.conf.signature_file
 
