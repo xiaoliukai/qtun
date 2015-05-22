@@ -122,29 +122,27 @@ local_fd_type tun_open(char name[IFNAMSIZ])
 }
 #endif
 
-ssize_t write_c(client_t* client, const void* buf, size_t count)
-{
-    if (qtun->use_udp)
-    {
-        return sendto(qtun->remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr));
-    }
-    else
-    {
-        const char* ptr = buf;
-        size_t left = count;
-        while (left)
-        {
-            ssize_t written = write(client->fd, ptr, (unsigned int)left);
-            if (written == 0) return 0;
-            else if (written == -1)
-            {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
-                return -1;
+ssize_t write_c(client_t* client, const void* buf, size_t count) {
+    unsigned char i;
+    for (i = 0; i < qtun->multi_pipe; ++i) {
+        if (qtun->use_udp) {
+            return sendto(qtun->remotefd, buf, (int)count, 0, (struct sockaddr*)&client->addr, sizeof(client->addr));
+        } else {
+            const char* ptr = buf;
+            size_t left = count;
+            while (left) {
+                ssize_t written = write(client->fd, ptr, (unsigned int)left);
+                if (written == 0)
+                    return 0;
+                else if (written == -1) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+                    return -1;
+                }
+                ptr  += written;
+                left -= written;
             }
-            ptr  += written;
-            left -= written;
+            return (ssize_t)count;
         }
-        return (ssize_t)count;
     }
 }
 
@@ -273,6 +271,8 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     if (qtun->msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
     for (i = 0; i < group->count; ++i)
     {
+        if (group->elements[i]->zone.idx == msg->zone.idx) // 已收到过
+            break;
         if (group->elements[i] == NULL) // 收包顺序可能与发包顺序不同
         {
             size_t this_len = sizeof(msg_t);

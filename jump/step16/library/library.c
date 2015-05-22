@@ -178,8 +178,9 @@ void conf_init(library_conf_t* conf)
 #endif
     memset(conf->signature_file, 0, sizeof(conf->signature_file));
     conf->use_dhcp     = 0;
-    conf->use_gzip     = 0;
     conf->use_udp      = 0;
+    conf->multi_pipe   = 1;
+    conf->use_gzip     = 0;
     conf->use_aes      = 0;
     memset(conf->aes_key_file, 0, sizeof(conf->aes_key_file));
     conf->use_des      = 0;

@@ -98,12 +98,13 @@ typedef struct
     char            dev_name[IFNAMSIZ];
 #endif
     fd_type         remotefd;
-    unsigned char   little_endian;
     local_fd_type   localfd;
+    unsigned char   little_endian;
     unsigned short  internal_mtu;
     unsigned short  max_length;
     unsigned char   use_udp;
     unsigned char   use_dhcp;
+    unsigned char   multi_pipe;
 
     unsigned char   aes_key[32];
     unsigned int    aes_key_len;
@@ -152,6 +153,7 @@ struct library_conf_s
     char           signature_file[MAX_PATH];
     unsigned char  use_dhcp;
     unsigned char  use_udp;
+    unsigned char  multi_pipe;
 
     int            use_gzip;
 
