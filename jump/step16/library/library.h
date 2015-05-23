@@ -13,6 +13,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "../network/msg.h"
 #include "../network/msg_group.h"
 
 #include "../struct/active_vector.h"
@@ -70,6 +71,8 @@ typedef struct
     struct sockaddr_in addr;
     unsigned int       keepalive;
     hash_t             recv_msg_groups;
+    msg_state_t        recv_msgs[MSG_MAX_TTL];
+    size_t             recv_msgs_ptr;
     unsigned short     internal_mtu;
     unsigned short     max_length;
 

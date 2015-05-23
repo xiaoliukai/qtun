@@ -100,14 +100,6 @@ static void accept_and_check()
 #else
     int flag = 1;
 #endif
-    hash_functor_t functor = {
-        msg_ident_hash,
-        msg_ident_compare,
-        hash_dummy_dup,
-        hash_dummy_dup,
-        msg_group_free_hash,
-        msg_group_free_hash_val
-    };
     if (fd == -1) return;
 
     if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) == -1)
@@ -139,13 +131,27 @@ static void accept_and_check()
         close(fd);
         return;
     }
-    if (!hash_init(&client->recv_msg_groups, functor, 11))
-    {
-        SYSLOG(LOG_ERR, "hash_init failed");
-        group_pool_room_free(&qtun->group_pool, client->buffer);
-        free(client);
-        close(fd);
-        return;
+    { // 初始化recv_msg_groups表
+        hash_functor_t functor = {
+            msg_ident_hash,
+            msg_ident_compare,
+            hash_dummy_dup,
+            hash_dummy_dup,
+            msg_group_free_hash,
+            msg_group_free_hash_val
+        };
+        if (!hash_init(&client->recv_msg_groups, functor, 11))
+        {
+            SYSLOG(LOG_ERR, "hash_init failed");
+            group_pool_room_free(&qtun->group_pool, client->buffer);
+            free(client);
+            close(fd);
+            return;
+        }
+    }
+    { // 初始化recv_msgs表
+        memset(client->recv_msgs, 0, sizeof(msg_state_t) * MSG_MAX_TTL);
+        client->recv_msgs_ptr = 0;
     }
     if (!active_vector_append(&qtun->clients, client, sizeof(*client)))
     {
@@ -393,6 +399,8 @@ static void process_msg(client_t* client, msg_t* msg, vector_t* for_del, size_t 
     size_t room_id;
 
     if (!check_msg(client, msg)) return;
+    if (msg_recved(client, msg)) return;
+    append_msg_recved(client, msg);
 
     if (msg->syscontrol)
     {

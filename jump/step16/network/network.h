@@ -49,6 +49,9 @@ extern msg_group_t* msg_group_lookup(hash_t* h, size_t ident);
 extern int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* room_id);
 extern int check_msg(client_t* client, msg_t* msg);
 
+extern int msg_recved(client_t* client, msg_t* msg);
+extern void append_msg_recved(client_t* client, msg_t* msg);
+
 #ifdef WIN32
 extern int local_have_data();
 #endif

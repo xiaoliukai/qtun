@@ -274,8 +274,6 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     if (qtun->msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
     for (i = 0; i < group->count; ++i)
     {
-        if (group->elements[i] && group->elements[i]->zone.idx == msg->zone.idx) // 已收到过
-            break;
         if (group->elements[i] == NULL) // 收包顺序可能与发包顺序不同
         {
             size_t this_len = sizeof(msg_t);
@@ -330,6 +328,25 @@ int check_msg(client_t* client, msg_t* msg)
         return 0;
     }
     return 1;
+}
+
+int msg_recved(client_t* client, msg_t* msg) {
+    int i;
+    for (i = 0; i < MSG_MAX_TTL; ++i) {
+        if (client->recv_msgs[i].used &&
+            client->recv_msgs[i].ident == msg->ident &&
+            client->recv_msgs[i].ident == msg->zone.idx) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void append_msg_recved(client_t* client, msg_t* msg) {
+    size_t i = client->recv_msgs_ptr++ % MSG_MAX_TTL;
+    client->recv_msgs[i].ident = msg->ident;
+    client->recv_msgs[i].idx = msg->zone.idx;
+    client->recv_msgs[i].used = 1;
 }
 
 #ifdef WIN32

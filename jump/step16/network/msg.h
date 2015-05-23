@@ -17,6 +17,8 @@
 #define MSG_OP_LEN                   3
 #define MSG_OP_MASK                  LEN2MASK(MSG_OP_LEN)
 
+#define MSG_MAX_TTL 200
+
 #define SYSCONTROL_MASK(op, mask1, mask2) (((op & MSG_OP_MASK) << 2) | ((mask1 & 1) << 1) | (mask2 & 1))
 #define MAKE_SYS_OP(op, req) (((op & MSG_OP_MASK) << 1) | (req & 1))
 #define CHECK_SYS_OP(src, op, req) (((src >> 1) & MSG_OP_MASK) == op && (src & 1) == req)
@@ -67,6 +69,12 @@ typedef struct
     int (*undo_handler)(const void*, const unsigned int, void**, unsigned int*);
     size_t room_id;
 } msg_process_handler_t;
+
+typedef struct {
+    unsigned int   ident;
+    unsigned short idx;
+    unsigned char  used;
+} msg_state_t;
 
 extern link_t msg_process_handlers;
 

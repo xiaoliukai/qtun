@@ -95,14 +95,6 @@ int connect_server(char* host, unsigned short port)
         pool_room_free(&qtun->pool, MSG_ROOM_IDX);
         if (read_msg_t(&qtun->client, &msg, 5) > 0)
         {
-            hash_functor_t functor = {
-                msg_ident_hash,
-                msg_ident_compare,
-                hash_dummy_dup,
-                hash_dummy_dup,
-                msg_group_free_hash,
-                msg_group_free_hash_val
-            };
             sys_login_msg_t* login;
             size_t room_id;
             struct in_addr a;
@@ -148,7 +140,21 @@ int connect_server(char* host, unsigned short port)
                     goto end;
                 }
             }
-            hash_init(&qtun->client.recv_msg_groups, functor, 11);
+            { // 初始化recv_msg_groups表
+                hash_functor_t functor = {
+                    msg_ident_hash,
+                    msg_ident_compare,
+                    hash_dummy_dup,
+                    hash_dummy_dup,
+                    msg_group_free_hash,
+                    msg_group_free_hash_val
+                };
+                hash_init(&qtun->client.recv_msg_groups, functor, 11);
+            }
+            { // 初始化recv_msg表
+                memset(qtun->client.recv_msgs, 0, sizeof(msg_state_t) * MSG_MAX_TTL);
+                qtun->client.recv_msgs_ptr = 0;
+            }
             qtun->client.local_ip = login->gateway;
             qtun->client.fd = fd;
             qtun->client.internal_mtu = ntohs(login->internal_mtu);
@@ -209,6 +215,8 @@ static void process_msg(msg_t* msg)
     size_t room_id;
 
     if (!check_msg(&qtun->client, msg)) return;
+    if (msg_recved(&qtun->client, msg)) return;
+    append_msg_recved(&qtun->client, msg);
 
     if (msg->syscontrol)
     {

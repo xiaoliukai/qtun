@@ -5,8 +5,6 @@
 
 #include "msg.h"
 
-#define MSG_MAX_TTL 200
-
 typedef struct
 {
     msg_t**        elements;
