@@ -139,7 +139,7 @@ static void accept_and_check()
         close(fd);
         return;
     }
-    if (!hash_init(&client->recv_table, functor, 11))
+    if (!hash_init(&client->recv_msg_groups, functor, 11))
     {
         SYSLOG(LOG_ERR, "hash_init failed");
         group_pool_room_free(&qtun->group_pool, client->buffer);
@@ -169,7 +169,7 @@ static void remove_clients(vector_t* v, const char* pfx)
         sprintf(ip, "%s", inet_ntoa(a));
         SYSLOG(LOG_INFO, "%s: %s", pfx, ip);
         close(client->fd);
-        hash_free(&client->recv_table);
+        hash_free(&client->recv_msg_groups);
         active_vector_del(&qtun->clients, (size_t)tmp);
     }
 }
@@ -481,7 +481,7 @@ static void udp_process(vector_t* for_del)
             client->addr = srcaddr;
             client->keepalive = (unsigned int)time(NULL);
             client->status = CLIENT_STATUS_CHECKLOGIN | CLIENT_STATUS_WAITING_BODY;
-            if (!hash_init(&client->recv_table, functor, 11))
+            if (!hash_init(&client->recv_msg_groups, functor, 11))
             {
                 SYSLOG(LOG_ERR, "hash_init failed");
                 free(client);
@@ -495,7 +495,7 @@ static void udp_process(vector_t* for_del)
             process_msg(client, msg, for_del, active_vector_count(&qtun->clients) - 1);
         }
     }
-    if (client) checkout_ttl(&client->recv_table);
+    if (client) checkout_ttl(&client->recv_msg_groups);
 }
 
 static void tcp_process(fd_set* set, vector_t* for_del)
@@ -546,7 +546,7 @@ static void tcp_process(fd_set* set, vector_t* for_del)
                 else process_msg(client, (msg_t*)client->buffer, for_del, active_vector_iterator_idx(iter));
             }
         }
-        checkout_ttl(&client->recv_table);
+        checkout_ttl(&client->recv_msg_groups);
 end:
         iter = active_vector_next(iter);
     }

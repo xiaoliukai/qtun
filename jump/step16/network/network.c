@@ -254,7 +254,7 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
     size_t i;
     unsigned int ident = ntohl(msg->ident);
     size_t all_len = msg_data_length(msg);
-    msg_group_t* group = msg_group_lookup(&client->recv_table, ident);
+    msg_group_t* group = msg_group_lookup(&client->recv_msg_groups, ident);
     if (!msg->zone.clip) return 0;
     if (group == NULL)
     {
@@ -269,7 +269,7 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
         memset(group->elements, 0, sizeof(msg_t*) * group->count);
         group->ident = ident;
         group->ttl_start = qtun->msg_ttl;
-        if (!hash_set(&client->recv_table, (void*)(unsigned long)ident, sizeof(ident), group, sizeof(msg_group_t))) return 0;
+        if (!hash_set(&client->recv_msg_groups, (void*)(unsigned long)ident, sizeof(ident), group, sizeof(msg_group_t))) return 0;
     }
     if (qtun->msg_ttl - group->ttl_start > MSG_MAX_TTL) return 0; // expired
     for (i = 0; i < group->count; ++i)
@@ -305,7 +305,7 @@ int process_clip_msg(local_fd_type fd, client_t* client, msg_t* msg, size_t* roo
                 }
                 else
                     SYSLOG(LOG_WARNING, "Parse message error");
-                hash_del(&client->recv_table, (void*)(unsigned long)ident, sizeof(ident));
+                hash_del(&client->recv_msg_groups, (void*)(unsigned long)ident, sizeof(ident));
             }
             break;
         }

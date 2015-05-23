@@ -217,7 +217,7 @@ unsigned char netmask()
 void free_client(void* c, size_t l)
 {
     client_t* client = c;
-    hash_free(&client->recv_table);
+    hash_free(&client->recv_msg_groups);
     free(c);
 }
 

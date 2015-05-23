@@ -148,7 +148,7 @@ int connect_server(char* host, unsigned short port)
                     goto end;
                 }
             }
-            hash_init(&qtun->client.recv_table, functor, 11);
+            hash_init(&qtun->client.recv_msg_groups, functor, 11);
             qtun->client.local_ip = login->gateway;
             qtun->client.fd = fd;
             qtun->client.internal_mtu = ntohs(login->internal_mtu);
@@ -379,7 +379,7 @@ void client_loop(fd_type remotefd, local_fd_type localfd)
             pool_room_free(&qtun->pool, RECV_ROOM_IDX);
             return;
         }
-        checkout_ttl(&qtun->client.recv_table);
+        checkout_ttl(&qtun->client.recv_msg_groups);
     }
 }
 

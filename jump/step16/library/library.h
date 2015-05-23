@@ -69,7 +69,7 @@ typedef struct
     unsigned short     remote_port;
     struct sockaddr_in addr;
     unsigned int       keepalive;
-    hash_t             recv_table;
+    hash_t             recv_msg_groups;
     unsigned short     internal_mtu;
     unsigned short     max_length;
 
