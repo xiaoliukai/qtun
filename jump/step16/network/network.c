@@ -335,7 +335,7 @@ int msg_recved(client_t* client, msg_t* msg) {
     for (i = 0; i < MSG_MAX_TTL; ++i) {
         if (client->recv_msgs[i].used &&
             client->recv_msgs[i].ident == msg->ident &&
-            client->recv_msgs[i].ident == msg->zone.idx) {
+            client->recv_msgs[i].idx == msg->zone.idx) {
             return i;
         }
     }

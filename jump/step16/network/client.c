@@ -215,7 +215,7 @@ static void process_msg(msg_t* msg)
     size_t room_id;
 
     if (!check_msg(&qtun->client, msg)) return;
-    if (msg_recved(&qtun->client, msg)) return;
+    if (msg_recved(&qtun->client, msg) != -1) return;
     append_msg_recved(&qtun->client, msg);
 
     if (msg->syscontrol)

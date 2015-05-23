@@ -399,7 +399,7 @@ static void process_msg(client_t* client, msg_t* msg, vector_t* for_del, size_t 
     size_t room_id;
 
     if (!check_msg(client, msg)) return;
-    if (msg_recved(client, msg)) return;
+    if (msg_recved(client, msg) != -1) return;
     append_msg_recved(client, msg);
 
     if (msg->syscontrol)
