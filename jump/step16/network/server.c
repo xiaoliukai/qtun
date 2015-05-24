@@ -628,7 +628,11 @@ void server_loop(fd_type remotefd, local_fd_type localfd)
     vector_init(&v, f);
     while (1)
     {
+#ifdef WIN32
         struct timeval tv = {0, 1};
+#else
+        struct timeval tv = {1, 0};
+#endif
         active_vector_iterator_t iter;
 
         FD_ZERO(&set);

@@ -237,6 +237,11 @@ int main(int argc, char* argv[])
 #endif
     a.s_addr = conf.localip;
 
+    if (!conf.use_udp && conf.multi_pipe > 1) {
+        SYSLOG(LOG_WARNING, "tcp mode must use 1 pipe");
+        conf.multi_pipe = 1;
+    }
+
 #ifdef WIN32
     WSAStartup(MAKEWORD(2, 2), &wsa);
 #endif

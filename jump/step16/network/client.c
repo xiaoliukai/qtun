@@ -350,7 +350,11 @@ void client_loop(fd_type remotefd, local_fd_type localfd)
     qtun->keepalive_replyed = 1;
     while (1)
     {
+#ifdef WIN32
         struct timeval tv = {0, 1};
+#else
+        struct timeval tv = {1, 0};
+#endif
         FD_ZERO(&set);
         FD_SET(remotefd, &set);
 #ifdef WIN32
